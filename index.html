@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lumenfall</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{height:100%}*,*::before,*::after{box-sizing:inherit}
+body{margin:0;min-height:100%;color:#EFE6D8;position:relative;overflow-x:hidden;
+ background:radial-gradient(120% 90% at 50% 8%,#2C241C 0%,#1A150F 45%,#0E0B08 100%);
+ font-family:"Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;
+ display:flex;flex-direction:column;align-items:center;
+ user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;transition:background 1.4s}
+body.lit{background:radial-gradient(120% 90% at 50% 8%,#241B12 0%,#130E09 45%,#080605 100%)}
+.wrap{width:100%;max-width:440px;padding:14px 16px 22px;display:flex;flex-direction:column;align-items:center;gap:12px}
+header{width:100%;display:flex;justify-content:space-between;align-items:flex-start}
+.title{font-size:13px;font-weight:700;letter-spacing:3.5px;color:#C9B89E}
+.subrow{display:flex;align-items:center;gap:6px;margin-top:4px}
+#sub{font-size:11px;font-weight:600;color:#7E7060;min-width:78px}
+.subrow button,.hb button{border:0;background:none;color:#5E5343;font:inherit;font-weight:700;cursor:pointer}
+.subrow button{font-size:15px;line-height:1;padding:0 2px}
+.hb{display:flex;gap:14px}.hb button{font-size:12px;color:#7E7060}
+.goalrow{display:flex;align-items:center;gap:14px;align-self:flex-start;width:100%}
+#goal{flex:0 0 auto;opacity:.95}
+.goallab{font-size:12px;font-weight:600;color:#8A7C68;line-height:1.6}
+.boardwrap{width:min(92vw,390px,50vh);transition:filter 1.4s}
+#board{width:100%;display:block;touch-action:manipulation;filter:drop-shadow(0 14px 30px #00000088)}
+body.lit .boardwrap{filter:drop-shadow(0 0 46px #F5CE8A4a) drop-shadow(0 0 120px #F5CE8A22)}
+.paints{display:flex;gap:18px;justify-content:center;align-items:flex-end;min-height:74px;transition:opacity 1.4s}
+body.lit .paints{opacity:.2}
+.pw{position:relative;display:flex;flex-direction:column;align-items:center;gap:5px}
+.p{border:0;border-radius:50%;cursor:pointer;position:relative;padding:0;
+ transition:transform .16s cubic-bezier(.34,1.4,.64,1);box-shadow:0 4px 12px #0007,inset 0 -4px 8px #0004}
+.p.on{transform:translateY(-7px) scale(1.06)}
+.p.on::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:1.5px solid #E8D4AE}
+.p:disabled{opacity:.2;cursor:default}
+.rng{font-size:10px;font-weight:700;color:#8A7C68}
+.cnt{position:absolute;top:-3px;right:-3px;width:19px;height:19px;border-radius:50%;
+ background:#171209;color:#EFDFC0;font-size:10.5px;font-weight:800;line-height:19px;text-align:center;pointer-events:none}
+.tools{display:flex;gap:24px;justify-content:center}
+.tools button{border:0;background:none;color:#7E7060;font:inherit;font-weight:700;font-size:12.5px;cursor:pointer;padding:3px}
+.msg{font-size:14px;font-weight:700;text-align:center;min-height:34px;color:#C9B89E}
+body.lit .msg{color:#F3DFB6}
+.msg small{display:block;font-size:11.5px;font-weight:600;color:#7E7060;margin-top:5px}
+.next{position:fixed;left:50%;transform:translateX(-50%) translateY(14px);
+ bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:30;
+ border:1.5px solid #B99A64;background:#1A130Ce8;backdrop-filter:blur(6px);
+ color:#F3DFB6;font:inherit;font-weight:700;font-size:15px;padding:14px 40px;border-radius:2px;
+ cursor:pointer;letter-spacing:2px;opacity:0;pointer-events:none;transition:opacity .45s,transform .45s}
+.next.show{opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0)}
+.hb button{position:relative}
+.badge{display:inline-block;margin-left:5px;min-width:16px;height:16px;line-height:16px;padding:0 4px;
+ border-radius:8px;background:#3A2E1E;color:#D6C09A;font-size:10px;font-weight:800;vertical-align:1px}
+.sheet{position:fixed;inset:0;background:#0B0806;z-index:40;display:flex;flex-direction:column;
+ padding:18px 16px 26px;gap:16px;transform:translateY(100%);
+ transition:transform .38s cubic-bezier(.4,0,.2,1);pointer-events:none}
+.sheet.open{transform:translateY(0);pointer-events:auto}
+.sheetbar{display:flex;justify-content:space-between;align-items:center;padding-top:env(safe-area-inset-top,0px)}
+.sheettitle{font-size:13px;font-weight:700;letter-spacing:3px;color:#C9B89E}
+.sheettitle span{margin-left:8px;letter-spacing:0;font-size:11px;color:#7E7060}
+.sheetbar button{border:0;background:none;color:#7E7060;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:14px;
+ align-content:start;overflow-y:auto;flex:1;padding:4px 2px 24px}
+.gitem{display:flex;flex-direction:column;align-items:center;gap:5px}
+.gitem canvas{width:100%;height:auto;border-radius:3px;box-shadow:0 4px 14px #00000077}
+.gitem span{font-size:10px;font-weight:700;color:#6B5F4E}
+.empty{color:#6B5F4E;font-size:12.5px;font-weight:600;line-height:1.7;text-align:center;margin:auto}
+.empty.hide{display:none}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="title">LUMENFALL
+      <span class="subrow"><button id="prevLv">‹</button><span id="sub">장미창</span><button id="nextLv">›</button></span>
+    </div>
+    <div class="hb"><button id="galBtn">창고<span class="badge" id="galN">0</span></button><button id="soundBtn">소리</button><button id="resetBtn">다시</button></div>
+  </header>
+  <div class="goalrow">
+    <canvas id="goal" width="260" height="260" style="width:96px;height:96px"></canvas>
+    <div class="goallab">이 창이 되도록<br>물감을 떨어뜨리세요</div>
+  </div>
+  <div class="boardwrap"><canvas id="board" width="1000" height="1000"></canvas></div>
+  <div class="paints" id="paints"></div>
+  <div class="tools"><button id="undoBtn">되돌리기</button></div>
+  <div class="msg" id="msg"></div>
+  <button class="next" id="nextBtn">다음 창</button>
+</div>
+
+<div class="sheet" id="sheet" aria-hidden="true">
+  <div class="sheetbar">
+    <div class="sheettitle">모은 창<span id="sheetCount"></span></div>
+    <button id="closeGal">닫기</button>
+  </div>
+  <div class="gallery" id="gallery"></div>
+  <div class="empty" id="galEmpty">아직 완성한 창이 없습니다.<br>창을 완성하면 여기에 걸립니다.</div>
+</div>
+<script src="assets.js"></script>
+<script src="geo.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
