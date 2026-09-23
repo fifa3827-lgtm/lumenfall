@@ -944,7 +944,10 @@ function load(k){
  const best=STARS[k]||0;
  $('par').innerHTML=`<b>★★★</b> <span class="nw">${parText()}</span> · <span class="nw">되돌리기 없이</span>`+(best?`<span class="best">${starStr(best)}</span>`:'');
  render()}
-loadSaved();updGal();renderSill();initMusic();
+loadSaved();updGal();
+/* 창턱이 나오기 전부터 별을 모은 사람은 처음 열 때 얻은 장식 가운데 가장 좋은 넷을 올려 둔다 */
+try{if(localStorage.getItem('lumenfall:sill')===null){const t=starTotal();SILL=DECO.filter(d=>d.need<=t).slice(-SILL_MAX).map(d=>d.id);saveSill()}}catch(e){}
+renderSill();initMusic();
 try{if(localStorage.getItem('lumenfall:sound')==='0'){sound=false;musicOn=false;$('soundBtn').textContent='소리 끔'}}catch(e){}
 document.addEventListener('visibilitychange',()=>{
  if(document.hidden){try{ac().suspend()}catch(e){}}
