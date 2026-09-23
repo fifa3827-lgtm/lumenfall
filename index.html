@@ -24,7 +24,10 @@ header{width:100%;display:flex;justify-content:space-between;align-items:flex-st
 .hb{display:flex;gap:14px}.hb button{font-size:13px;color:#E6D5B8;text-shadow:0 1px 2px #0007}
 .goalrow{display:flex;align-items:center;gap:14px;align-self:flex-start;width:100%}
 #goal{flex:0 0 auto;opacity:.95}
-.cat{margin-left:auto;height:84px;width:auto;flex:0 0 auto;align-self:flex-end;filter:drop-shadow(0 4px 8px #0006);transform-origin:50% 100%}
+/* 고양이는 목표 줄 오른쪽 끝에 크게 앉아, 발끝이 창 위쪽 여백에 살짝 걸친다. 누름은 아래로 통과시킨다. */
+.goalrow{position:relative;padding-right:112px}
+.cat{position:absolute;right:-6px;bottom:-40px;height:140px;width:auto;z-index:5;pointer-events:none;
+ filter:drop-shadow(0 6px 10px #0007);transform-origin:50% 100%}
 .cat.hop{animation:cathop .6s cubic-bezier(.3,1.6,.5,1)}
 @keyframes cathop{0%{transform:translateY(0) scale(1)}35%{transform:translateY(-10px) scale(1.04,.97)}100%{transform:translateY(0) scale(1)}}
 .goallab{font-size:14px;font-weight:600;color:#F6E8D0;line-height:1.55;text-shadow:0 1px 3px #0008}
