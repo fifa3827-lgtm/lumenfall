@@ -15,3 +15,9 @@ const CHAR = {
   drop:{}
 };
 ['R','Y','B'].forEach(c=>{CHAR.drop[c]={};['base','excited','sleepy','asleep'].forEach(e=>CHAR.drop[c][e]=`assets/char/drop${c}_${e}.png`)});
+/* 창턱 장식과 마을 건물 그림 (제미나이 3×3 그림판을 tools/art/cut_sheet.py로 잘라 webp로) */
+const ART={deco:{},house:{}};
+['sprout','candle','shell','tea','books','bowl','hourglass','cactus','globe','lantern','starjar','lamp','globe2','jack','mill','boat','vase','train']
+ .forEach(k=>ART.deco[k]=`assets/deco/${k}.webp`);
+['greenhouse','school','church','station','observatory','barn','bakery','fruit','lighthouse']
+ .forEach(k=>{ART.house[k]=`assets/village/${k}.webp`;ART.house[k+'_off']=`assets/village/${k}_off.webp`});

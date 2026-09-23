@@ -8,7 +8,8 @@ b64=lambda p,m='image/png':'data:%s;base64,%s'%(m,base64.b64encode(open(p,'rb').
 cat={k:b64(f'assets/char/cat_{k}.png') for k in ['base','curious','happy','sunny','surprised']}
 drop={c:{e:b64(f'assets/char/drop{c}_{e}.png') for e in ['base','excited','sleepy','asleep']} for c in 'RYB'}
 assets=('const TEX='+json.dumps({k:b64(f'assets/glass_{k}.png') for k in 'RYBOGPN'})+';\nconst AUD='+
- json.dumps({k:b64(f'assets/{k}.mp3','audio/mpeg') for k in ['bgm','win','drop','mix']})+';\nconst CHAR='+json.dumps({'cat':cat,'drop':drop})+';\n')
+ json.dumps({k:b64(f'assets/{k}.mp3','audio/mpeg') for k in ['bgm','win','drop','mix']})+';\nconst CHAR='+json.dumps({'cat':cat,'drop':drop})+';\n'+
+ 'const ART='+json.dumps({'deco':{f[:-5]:b64('assets/deco/'+f,'image/webp') for f in sorted(os.listdir('assets/deco'))},'house':{f[:-5]:b64('assets/village/'+f,'image/webp') for f in sorted(os.listdir('assets/village'))}})+';\n')
 body=re.sub(r'<script src="([^"]+)"></script>',lambda m:'<script>'+(assets if m.group(1)=='assets.js' else open(m.group(1)).read())+'</script>',body)
 s=head+body
 a=""" fetch(url,{cache:'force-cache'})

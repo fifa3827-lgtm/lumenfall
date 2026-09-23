@@ -874,7 +874,8 @@ try{SILL=JSON.parse(localStorage.getItem('lumenfall:sill')||'[]')||[]}catch(e){S
 const SILL_MAX=4;
 function starTotal(){let t=0;for(const k in STARS)t+=+STARS[k]||0;return t}
 function saveSill(){try{localStorage.setItem('lumenfall:sill',JSON.stringify(SILL))}catch(e){}}
-const svgOf=d=>`<svg viewBox="0 0 64 64" aria-hidden="true">${d.svg}</svg>`;
+/* 장식은 제미나이 그림(ART.deco)을 쓰고, 그림이 없으면 deco.js의 SVG로 그린다 */
+const svgOf=d=>(typeof ART!=='undefined'&&ART.deco[d.id])?`<img class="dimg d-${d.id}" src="${ART.deco[d.id]}" alt="" draggable="false">`:`<svg viewBox="0 0 64 64" aria-hidden="true">${d.svg}</svg>`;
 function renderSill(fresh){
  const ds=SILL.map(id=>DECO.find(d=>d.id===id)).filter(Boolean),el=$('sill');
  const one=d=>`<div class="${d.id===fresh?'d':''}" title="${d.name}">${svgOf(d)}</div>`;

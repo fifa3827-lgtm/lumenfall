@@ -124,6 +124,13 @@ body.lit[data-time="night"]{background:radial-gradient(120% 90% at 50% 6%,#2A396
  background:linear-gradient(180deg,#8A6440,#5A3E26);box-shadow:0 4px 8px #0008,inset 0 1px 0 #B08658;z-index:-1}
 .sill .side{display:flex;gap:4px;align-items:flex-end}
 .sill svg{width:46px;height:46px;display:block;filter:drop-shadow(0 2px 2px #0007)}
+.sill img.dimg{height:48px;width:auto;display:block;filter:drop-shadow(0 2px 2px #0007)}
+.dk img.dimg{height:54px;width:auto;max-width:100%;object-fit:contain}
+.dk.lock img{filter:brightness(0) opacity(.35)}
+/* 불빛 장식은 은은하게 숨 쉬듯 빛난다 */
+.sill img.d-candle,.sill img.d-lantern,.sill img.d-lamp,.sill img.d-jack,.sill img.d-starjar{animation:dglowimg 2.6s ease-in-out infinite}
+@keyframes dglowimg{0%,100%{filter:drop-shadow(0 2px 2px #0007) drop-shadow(0 0 3px #FFD98A55)}50%{filter:drop-shadow(0 2px 2px #0007) drop-shadow(0 0 10px #FFD98Aaa)}}
+.vimg.off{filter:brightness(.75)}
 .sill .d{animation:decoin .5s cubic-bezier(.3,1.6,.5,1) both}
 @keyframes decoin{from{opacity:0;transform:translateY(-14px) scale(.6)}to{opacity:1;transform:none}}
 .dflame{transform-box:fill-box;transform-origin:50% 100%;animation:flick 1.6s ease-in-out infinite}

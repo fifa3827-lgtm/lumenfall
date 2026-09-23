@@ -77,6 +77,9 @@ game.js            게임 로직 · 생성기 · 렌더링 · 효과 · 소리
 geo.js             예전 무늬 창 모양 (지금은 쓰지 않음)
 assets/            유리 텍스처 7장, 소리 4개
 assets/char/       고양이 5장, 물감 방울 12장
+assets/deco/       창턱 장식 그림 18장
+assets/village/    마을 건물 그림 18장(불 켠 것 · 끈 것)
+tools/art/         제미나이 3×3 그림판 자르기(cut_sheet.py)
 tools/pic/         도안(designs.py)과 조각 자르기(build.py), 시험판 한 장짜리 HTML 만들기(artifact.py)
 docs/design.md     규칙과 생성기 설계
 docs/assets.md     에셋 제작 방법과 출처
