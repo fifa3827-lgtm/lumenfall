@@ -657,14 +657,19 @@ function idleCheck(){
 setInterval(idleCheck,1000);
 function renderPaints(){let h='';
  const idle=performance.now()-idleT>12000;
+ /* 방울이 많으면(필요 없는 방울·빛 방울까지 7~8개) 한 줄에 들어가도록 줄이고, 그래도 넘치면 두 줄로 */
+ const baseW=it=>it.r===1?44:it.r===2?54:62,slot=it=>Math.max(baseW(it),it.sub?72:50);
+ const avail=Math.min(window.innerWidth||400,440)-32-10,need=items.reduce((a,it)=>a+slot(it),0)+18*Math.max(0,items.length-1);
+ const sc=Math.max(.72,Math.min(1,avail/need));
+ $('paints').style.gap=`10px ${Math.round(18*sc)}px`;
  items.forEach((it,k)=>{
-  const w=it.r===1?44:it.r===2?54:62;
+  const w=Math.round(baseW(it)*sc);
   const lab=(it.r===1?'옆까지':it.r===2?'두 칸':'세 칸')+(it.sub?' 빼기':'');
   /* 방울 표정: 고른 방울은 신남, 다 쓴 방울은 잠듦, 한동안 손대지 않으면 졸림 */
   const face=it.n<=0?'asleep':sel===k?'excited':idle?'sleepy':'base';
-  h+=`<div class="pw"><button class="p${sel===k?' on':''}${it.sub?' light':''}" data-k="${k}" ${it.n<=0?'disabled':''} aria-label="${lab} 물감"
+  h+=`<div class="pw" style="min-width:${Math.round(slot(it)*sc)}px"><button class="p${sel===k?' on':''}${it.sub?' light':''}" data-k="${k}" ${it.n<=0?'disabled':''} aria-label="${lab} 물감"
    style="width:${w}px;height:${Math.round(w*1.18)}px;background-image:url(${CHAR.drop[it.c][face]})">
-   <span class="cnt">${it.n}</span></button><span class="rng">${lab}</span></div>`});
+   <span class="cnt">${it.n}</span></button><span class="rng" style="font-size:${(11*Math.max(.82,sc)).toFixed(1)}px">${lab}</span></div>`});
  $('paints').innerHTML=h}
 let drag=null,rotatedOnce=false,hintLoop=false,tutLoop=false;
 /* 창턱 고양이: 판이 열리면 궁금, 조금 뒤 기본, 탁해지면 궁금, 완성하면 기쁨 */
@@ -962,6 +967,7 @@ function load(k){
  const best=STARS[k]||0;
  $('par').innerHTML=`<b>★★★</b> <span class="nw">${parText()}</span> · <span class="nw">되돌리기 없이</span>`+(best?`<span class="best">${starStr(best)}</span>`:'');
  render()}
+window.addEventListener('resize',()=>{if(CUR)renderPaints()});
 loadSaved();updGal();
 /* 창턱이 나오기 전부터 별을 모은 사람은 처음 열 때 얻은 장식 가운데 가장 좋은 넷을 올려 둔다 */
 try{if(localStorage.getItem('lumenfall:sill')===null){const t=starTotal();SILL=DECO.filter(d=>d.need<=t).slice(-SILL_MAX).map(d=>d.id);saveSill()}}catch(e){}
