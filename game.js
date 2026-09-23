@@ -13,11 +13,11 @@ function usePic(pi,fine){
  const P=PICS[pi],S=fine?P.fine:P.base;
  REG=S.regs.map(r=>({pts:r.pts,cx:r.cx,cy:r.cy,part:r.part}));ADJ=S.adj;GNAME=P.name;
  RINGS=null;RINGIDX=[];RRAD=[];OUTLINES=P.outlines;
- LOCK=REG.map(()=>0);
+ LOCK=REG.map(()=>0);TWIN=REG.map(()=>-1);DRY=REG.map(()=>false);
 }
 function useGeo(gi){
  if(typeof gi==='object'&&gi){usePic(gi.pic,gi.fine);return}
- OUTLINES=null;LOCK=[];
+ OUTLINES=null;LOCK=[];TWIN=[];DRY=[];
  const g=normalize(GEOS[gi%GEOS.length]());
  REG=g.regs;ADJ=buildAdj(REG);GNAME=g.name;RINGS=g.rings||null;
  RINGIDX=[];RRAD=[];
@@ -52,7 +52,13 @@ function itemsOf(seq){
 function spread(from,rad){const seen=new Set([from]);let f=[from];
  for(let d=0;d<rad;d++){const nx=[];f.forEach(i=>ADJ[i].forEach(j=>{if(!seen.has(j)){seen.add(j);nx.push(j)}}));f=nx}
  return [...seen]}
-function applyDrop(st,from,col,rad){const g=st.slice();spread(from,rad).forEach(i=>g[i]|=BIT[col]);return g}
+/* 특수 유리
+ - 쌍둥이(TWIN): 한 조각에 물감이 닿으면 짝 조각에도 같은 물감이 닿는다.
+ - 마르는 유리(DRY): 처음 닿은 색으로 굳어서, 그다음 물감은 묻지 않는다(번짐은 지나간다). */
+let TWIN=[],DRY=[];
+function reach(from,rad){const s=new Set(spread(from,rad));[...s].forEach(i=>{if(TWIN[i]>=0)s.add(TWIN[i])});return [...s]}
+function applyDrop(st,from,col,rad){const g=st.slice();
+ reach(from,rad).forEach(i=>{if(DRY[i]&&g[i])return;g[i]|=BIT[col]});return g}
 
 /* ---- 대칭 점수 ---- */
 let MIRROR=[],ROT=[];
@@ -105,7 +111,7 @@ function minDrops(g,its){
   const cnt={};its.forEach(it=>{if(it.c===c)cnt[it.r]=(cnt[it.r]||0)+it.n});
   const cand=[],seen=new Set();
   Object.keys(cnt).forEach(r=>{r=+r;for(let at=0;at<REG.length;at++){
-   const fp=spread(at,r);if(!fp.every(i=>S.has(i)))continue;
+   const fp=reach(at,r);if(!fp.every(i=>S.has(i)))continue;
    const key=r+':'+fp.slice().sort((a,b)=>a-b).join(',');if(seen.has(key))continue;seen.add(key);
    cand.push({r,fp})}});
   const max=Object.values(cnt).reduce((a,b)=>a+b,0);
@@ -126,33 +132,55 @@ function minDrops(g,its){
 }
 /* 그림 창 판 만들기: 부분마다 아직 허용된 색이 아닌 조각을 골라, 그 색에 모자란 원색 방울을
  떨어뜨리기를 반복한다. 허용된 색으로 빈틈없이 채워지면 한 벌이 된다. 여러 벌 중
- 방울이 적고 주인공 색 비율이 알맞은 것을 고른다. 같은 단계는 같은 판. */
+ 점수가 가장 높은 것을 고른다. 같은 단계는 같은 판. */
 /* 색 이름별로 허용하는 색과 주인공 색. 값은 원색 비트(빨1 노2 파4)의 합이다. */
 const PAL={red:{want:1,allow:[1,3],ratio:.65,max:3},orange:{want:3,allow:[3,2,1],ratio:.65,max:3},
  yellow:{want:2,allow:[2,3,6],ratio:.65,max:3},green:{want:6,allow:[6,2],ratio:.75,max:4},
  blue:{want:4,allow:[4,6,5],ratio:.65,max:3},purple:{want:5,allow:[5,4,1],ratio:.6,max:4}};
-/* 난이도: 단계가 오를수록
- - 칠할 부분이 늘고(1·2단계 한 곳 → 3~6단계 두 곳 → 7~16단계 세 곳 → 그다음 네 곳)
- - 두 바퀴째(25단계)부터는 같은 그림이 조각이 더 잘게 나뉘어 나오고
- - 9단계부터 필요 없는 방울이 하나(21단계부터 둘) 섞여 「덜 쓰기」 별이 어려워지고
- - 한 부분에 쓰는 방울 수와 섞인 색의 가짓수가 늘어난다. */
+/* 난이도 곡선(단계 번호 L은 0부터)
+ - 칠할 부분: 1·2단계 한 곳 → 3~5단계 두 곳 → 6~11단계 세 곳 → 그다음 네 곳
+ - 조각: 5단계부터 잘게 나뉜 판(fine)이 섞이고 9단계부터는 모두 잘게
+ - 필요 없는 방울: 5단계부터 하나, 11단계부터 둘
+ - 쌍둥이 유리: 9단계부터 한 쌍(21단계부터 두 쌍)
+ - 마르는 유리: 15단계부터 한 조각(25단계부터 두 조각)
+ - 단계가 오를수록 한 부분에 방울을 더 쓰고, 섞인 색이 많은 판을 고른다. */
+const TUNE=L=>({
+ nAct:L<2?1:L<5?2:L<11?3:4,
+ fine:L>=8||(L>=4&&L%2===0),
+ decoys:L>=10?2:L>=4?1:0,
+ twins:L>=20?2:L>=8?1:0,
+ dry:L>=24?2:L>=14?1:0,
+ extra:L>=6?1:0,
+ perDrop:Math.max(7,22-L*1.5),
+ mixBonus:Math.min(40,12+L*2)});
 function genPic(L,pi){
- const N=PICS.length,v=Math.floor(L/N),fine=v>=2||(v>=1&&L%2===1);
- usePic(pi,fine);const P=PICS[pi];
- /* 같은 도안이 다시 나오면(회차) 다른 색 조합을 쓴다 */
+ const T=TUNE(L),v=Math.floor(L/PICS.length);
+ usePic(pi,T.fine);const P=PICS[pi];
  const recipes=P.pals.map(ps=>PAL[ps[v%ps.length]]);
  const parts=recipes.map((rc,k)=>k);
- const nAct=Math.min(parts.length,L<2?1:L<6?2:L<16?3:4);
- const pr=mul(L*131+7),order=parts.slice().sort(()=>pr()-.5),act=new Set(order.slice(0,nAct));
- const extra=L>=16?1:0, perDrop=Math.max(8,25-L), mixBonus=Math.min(30,12+L);
+ /* 칠할 부분은 조각이 많은 부분부터 고르되, 단계마다 조금씩 섞는다 */
+ const pr=mul(L*131+7);
+ const size=k=>REG.filter(r=>r.part===k).length+pr()*3;
+ const order=parts.slice().sort((a,b)=>size(b)-size(a));
+ const act=new Set(order.slice(0,Math.min(parts.length,T.nAct)));
+ /* 특수 유리 자리 정하기: 칠할 부분 안에서 서로 떨어진 조각끼리 쌍둥이, 마르는 유리는 따로 */
+ const sr=mul(L*613+29),actIdx=REG.map((r,i)=>act.has(r.part)?i:-1).filter(i=>i>=0);
+ for(let k=0;k<T.twins;k++){
+  for(let t=0;t<40;t++){const a=actIdx[Math.floor(sr()*actIdx.length)],b=actIdx[Math.floor(sr()*actIdx.length)];
+   if(a===b||TWIN[a]>=0||TWIN[b]>=0||REG[a].part!==REG[b].part)continue;
+   if(spread(a,2).includes(b))continue;TWIN[a]=b;TWIN[b]=a;break}}
+ for(let k=0;k<T.dry;k++){
+  for(let t=0;t<40;t++){const a=actIdx[Math.floor(sr()*actIdx.length)];if(TWIN[a]>=0||DRY[a])continue;DRY[a]=true;break}}
  let ds=[];const pre=[];
  recipes.forEach((rc,part)=>{
   const idx=REG.map((r,i)=>r.part===part?i:-1).filter(i=>i>=0);
+  const on=act.has(part),special=on&&idx.some(i=>TWIN[i]>=0||DRY[i]);
   let best=null,bs=-1e9;
-  for(let t=0;t<800;t++){
+  for(let t=0;t<900;t++){
    const rand=mul(L*7919+part*3301+t*104729+11);
    let g=new Array(REG.length).fill(0);const seq=[];
-   for(let k=0;k<rc.max+extra;k++){
+   const lim=rc.max+(on?T.extra:0)+(special?1:0);
+   for(let k=0;k<lim;k++){
     const bad=idx.filter(i=>!rc.allow.includes(g[i]));if(!bad.length)break;
     const i=bad[Math.floor(rand()*bad.length)];
     const goals=rc.allow.filter(a=>(a&g[i])===g[i]&&a!==g[i]);if(!goals.length)break;
@@ -164,19 +192,26 @@ function genPic(L,pi){
    if(idx.some(i=>!rc.allow.includes(g[i])))continue;
    const f=idx.filter(i=>g[i]===rc.want).length/idx.length;
    const kinds=new Set(idx.map(i=>g[i])).size;
-   const sc=-Math.abs(f-rc.ratio)*60+(kinds>1?mixBonus:0)+(kinds>2?mixBonus/2:0)-seq.length*perDrop;
+   /* 마르는 유리가 실제로 순서를 가르는 판(먼저 굳어 다른 색을 막은 판)에 점수를 더 준다 */
+   let orderMatters=0;
+   if(special&&idx.some(i=>DRY[i])){const rev=seq.slice().reverse().reduce((h,d)=>applyDrop(h,d[0],d[1],d[2]),new Array(REG.length).fill(0));
+    if(idx.some(i=>rev[i]!==g[i]))orderMatters=25}
+   const sc=-Math.abs(f-rc.ratio)*50+(kinds>1?T.mixBonus:0)+(kinds>2?T.mixBonus*.6:0)-seq.length*(on?T.perDrop:25)+orderMatters;
    if(sc>bs){bs=sc;best=seq}
   }
   if(!best)best=[[idx[0],PRIMS.find(c=>rc.want&BIT[c]),2]];
-  if(act.has(part))ds=ds.concat(best);else pre.push(...best);
+  if(on)ds=ds.concat(best);else pre.push(...best);
  });
- const pg=runSeq(pre);pg.forEach((v,i)=>{if(v)LOCK[i]=v});
+ const pg=runSeq(pre);pg.forEach((x,i)=>{if(x)LOCK[i]=x});
  const start=LOCK.slice();
- const g=runSeq(ds).map((v,i)=>v|start[i]);
+ const g=runSeq(ds).map((x,i)=>x|start[i]);
  /* 필요 없는 방울: 이미 쓰는 방울과 같은 모양으로 섞어 두어 눈에 띄지 않게 한다 */
- const items=itemsOf(ds),decoys=L>=20?2:L>=8?1:0,dr=mul(L*977+3);
- for(let k=0;k<decoys&&items.length;k++){const it=items[Math.floor(dr()*items.length)];it.n++}
- return {goal:g,items,start,score:0,name:GNAME,rotate:false,geo:{pic:pi,fine},par:minDrops(g,items),pic:true,ds,lock:LOCK.slice()};
+ const items=itemsOf(ds),dr=mul(L*977+3);
+ for(let k=0;k<T.decoys&&items.length;k++){const it=items[Math.floor(dr()*items.length)];it.n++}
+ /* 마르는 유리가 있으면 순서가 결과를 바꿔 가장 적은 방울 계산이 맞지 않으므로 만든 순서의 길이를 기준으로 한다 */
+ const par=DRY.some(x=>x)?ds.length:Math.min(ds.length,minDrops(g,items));
+ return {goal:g,items,start,score:0,name:GNAME,rotate:false,geo:{pic:pi,fine:T.fine},par,pic:true,ds,
+  lock:LOCK.slice(),twin:TWIN.slice(),dry:DRY.slice(),intro:L===8?'twin':L===14?'dry':null,tut:L===0};
 }
 function genLevel(L){
  /* 모든 판이 그림 창이다. 도안을 차례로 돌린다. */
@@ -473,7 +508,24 @@ function drawAll(ctx,cx,cy,rr,g,alphaMap,useGlow,bgFill){
   let a=alphaMap?(alphaMap[i]!==undefined?alphaMap[i]:1):1;if(a<=0)continue;
   if(LOCK[i]&&!useGlow)a*=.55;else if(LOCK[i])a*=.55+.45*glow;
   withRot(ctx,REG[i],cx,cy,()=>drawRegion(ctx,i,cx,cy,rr,v,a,useGlow?glowOf(i):0))}
+ drawSpecial(ctx,cx,cy,rr);
  leadNet(ctx,cx,cy,rr,glow,'over');
+}
+/* 특수 유리 표시: 마르는 유리는 성에 낀 듯한 빗금, 쌍둥이는 짝마다 같은 색 고리 */
+function drawSpecial(ctx,cx,cy,rr){
+ if(!DRY.length&&!TWIN.length)return;
+ DRY.forEach((d,i)=>{if(!d)return;const r=REG[i];
+  ctx.save();path(ctx,r,cx,cy,rr,0);ctx.clip();ctx.globalAlpha=.55;ctx.strokeStyle='#F4F0FF';ctx.lineWidth=rr*.011;
+  const x0=cx+r.cx*rr,y0=cy+r.cy*rr,st=rr*.045;
+  for(let k=-8;k<=8;k++){ctx.beginPath();ctx.moveTo(x0+k*st-rr*.4,y0-rr*.4);ctx.lineTo(x0+k*st+rr*.4,y0+rr*.4);ctx.stroke()}
+  ctx.restore()});
+ const seen=new Set();let pair=0;
+ TWIN.forEach((j,i)=>{if(j<0||seen.has(i))return;seen.add(i);seen.add(j);
+  const col=pair++%2?'#DDE6F0':'#F5CE6A';
+  [i,j].forEach(k=>{const x=cx+REG[k].cx*rr,y=cy+REG[k].cy*rr;
+   ctx.save();ctx.strokeStyle=col;ctx.lineWidth=rr*.014;ctx.globalAlpha=.9;
+   ctx.beginPath();ctx.arc(x,y,rr*.045,0,7);ctx.stroke();
+   ctx.fillStyle=col;ctx.beginPath();ctx.arc(x,y,rr*.014,0,7);ctx.fill();ctx.restore()})});
 }
 function render(){
  bx.clearRect(0,0,W,W);
@@ -502,6 +554,14 @@ function render(){
   motes.forEach(m=>{bx.globalAlpha=lit*m.a*(.45+.55*Math.sin(performance.now()/760+m.p));
    bx.fillStyle='#FFF2CE';bx.beginPath();bx.arc(m.x,m.y,m.r,0,7);bx.fill()});bx.restore()}
  drawFX();
+ if(CUR&&CUR.tut&&!hist.length&&!done){
+  /* 1단계 안내: 첫 방울을 떨어뜨릴 조각에 숨쉬는 고리 */
+  const i=CUR.ds[0][0],t=performance.now()/1000,x=CX+REG[i].cx*RR,y=CY+REG[i].cy*RR;
+  bx.save();bx.strokeStyle='#FFF3D0';bx.lineWidth=RR*.02;bx.globalAlpha=.55+.4*Math.sin(t*4);
+  bx.beginPath();bx.arc(x,y,RR*(.09+.02*Math.sin(t*4)),0,7);bx.stroke();bx.restore();
+  if(!tutLoop){tutLoop=true;(function tl(){if(!CUR||!CUR.tut||hist.length||done){tutLoop=false;render();return}
+   if(!anim)render();requestAnimationFrame(tl)})()}
+ }
  if(origins.length&&!done){bx.save();origins.forEach(i=>{
   bx.globalAlpha=.45;bx.fillStyle='#FFF6DE';bx.beginPath();
   bx.arc(CX+REG[i].cx*RR,CY+REG[i].cy*RR,RR*.012,0,7);bx.fill()});bx.restore()}
@@ -560,7 +620,7 @@ function renderPaints(){let h='';
    style="width:${w}px;height:${Math.round(w*1.18)}px;background-image:url(${CHAR.drop[it.c][face]})">
    <span class="cnt">${it.n}</span></button><span class="rng">${lab}</span></div>`});
  $('paints').innerHTML=h}
-let drag=null,rotatedOnce=false,hintLoop=false;
+let drag=null,rotatedOnce=false,hintLoop=false,tutLoop=false;
 /* 창턱 고양이: 판이 열리면 궁금, 조금 뒤 기본, 탁해지면 궁금, 완성하면 기쁨 */
 let catT=0,lastPaint='';
 function cat(face,hop,back){const el=$('cat');if(!el)return;el.src=CHAR.cat[face];
@@ -613,7 +673,7 @@ function place(at,k){
  const it=items[k];
  hist.push({cells:cells.slice(),items:items.map(o=>({...o})),sel,origins:origins.slice()});
  origins=origins.concat([at]);
- const before=cells.slice(), touched=spread(at,it.r);
+ const before=cells.slice(), touched=reach(at,it.r);$('msg').textContent='';
  cells=applyDrop(cells,at,it.c,it.r);it.n--;
  sDrop();setTimeout(sFill,50);
  fxDrop(at,it.c);
@@ -623,6 +683,7 @@ function place(at,k){
  anim={};touched.forEach(i=>anim[i]=before[i]?1:0);
  const dist={};dist[at]=0;let f=[at];
  for(let d=1;d<=it.r;d++){const nx=[];f.forEach(i=>ADJ[i].forEach(j=>{if(dist[j]===undefined){dist[j]=d;nx.push(j)}}));f=nx}
+ touched.forEach(i=>{if(dist[i]===undefined)dist[i]=it.r});
  const t0=performance.now(),md=Math.max(1,it.r);
  (function step(){const t=(performance.now()-t0)/420;let alive=false;
   touched.forEach(i=>{const p=Math.min(1,Math.max(0,(t-(dist[i]/md)*.5)/.5));anim[i]=p;if(p<1)alive=true});
@@ -697,7 +758,7 @@ function buildGallery(){
   lit=sl;
  });
  /* 고리 정보까지 지금 판으로 되돌린다. 조각 순서는 같게 만들어진다. */
- if(CUR){useGeo(CUR.geo);if(CUR.pic)LOCK=CUR.lock.slice();else buildSym()}else{REG=sREG;ADJ=sADJ;GNAME=sGN}
+ if(CUR){useGeo(CUR.geo);if(CUR.pic){LOCK=CUR.lock.slice();TWIN=CUR.twin.slice();DRY=CUR.dry.slice()}else buildSym()}else{REG=sREG;ADJ=sADJ;GNAME=sGN}
  updGal();
 }
 function load(k){
@@ -711,6 +772,11 @@ function load(k){
  $('sub').innerHTML=CUR.name+' · '+(k+1)+'<span class="timechip">'+TNAME[tm]+'</span>';
  $('nextBtn').classList.remove('show');$('msg').textContent='';
  cat('curious',true,2200);
+ TWIN=CUR.twin?CUR.twin.slice():[];DRY=CUR.dry?CUR.dry.slice():[];
+ if(CUR.tut){const k=items.findIndex(o=>o.c===CUR.ds[0][1]&&o.r===CUR.ds[0][2]);if(k>=0)sel=k;
+  $('msg').innerHTML='<small>반짝이는 유리를 톡 눌러 물감을 떨어뜨려 보세요</small>'}
+ else if(CUR.intro==='twin')$('msg').innerHTML='<small>같은 고리가 달린 두 조각은 쌍둥이예요.<br>한쪽에 물감이 닿으면 짝에도 닿아요</small>';
+ else if(CUR.intro==='dry')$('msg').innerHTML='<small>빗금 유리는 처음 닿은 색으로 굳어요.<br>어느 물감을 먼저 떨어뜨릴지 생각해 보세요</small>';
  const best=STARS[k]||0;
  $('par').innerHTML=`<b>★★★</b> <span class="nw">${parText()}</span> · <span class="nw">되돌리기 없이</span>`+(best?`<span class="best">${starStr(best)}</span>`:'');
  render()}
