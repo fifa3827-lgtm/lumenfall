@@ -140,26 +140,26 @@ function minDrops(g,its){
 const PAL={red:{want:1,allow:[1,3],ratio:.65,max:3},orange:{want:3,allow:[3,2,1],ratio:.65,max:3},
  yellow:{want:2,allow:[2,3,6],ratio:.65,max:3},green:{want:6,allow:[6,2],ratio:.75,max:4},
  blue:{want:4,allow:[4,6,5],ratio:.65,max:3},purple:{want:5,allow:[5,4,1],ratio:.6,max:4}};
-/* 난이도 곡선(단계 번호 L은 0부터)
- - 칠할 부분: 1·2단계 한 곳 → 3~5단계 두 곳 → 6~11단계 세 곳 → 그다음 네 곳
- - 조각: 5단계부터 잘게 나뉜 판(fine)이 섞이고 9단계부터는 모두 잘게
- - 필요 없는 방울: 5단계부터 하나, 11단계부터 둘
- - 쌍둥이 유리: 9단계부터 한 쌍(21단계부터 두 쌍)
- - 마르는 유리: 15단계부터 한 조각(25단계부터 두 조각)
- - 투명 유리: 21단계부터 한 조각(29단계부터 두 조각)
- - 빛 방울(원색 빼기): 27단계부터 한 부분에 하나
+/* 난이도 곡선(단계 번호 L은 0부터, 아래 설명의 단계는 화면에 보이는 번호)
+ - 칠할 부분: 1~3단계 한 곳 → 4~8단계 두 곳 → 9~16단계 세 곳 → 그다음 네 곳
+ - 조각: 8단계부터 가끔(세 판에 한 번) 잘게, 15단계부터 모두 잘게
+ - 필요 없는 방울: 8단계부터 하나, 17단계부터 둘
+ - 쌍둥이 유리: 11단계부터 한 쌍(25단계부터 두 쌍)
+ - 마르는 유리: 18단계부터 한 조각(31단계부터 두 조각)
+ - 투명 유리: 24단계부터 한 조각(35단계부터 두 조각)
+ - 빛 방울(원색 빼기): 30단계부터 한 부분에 하나
  - 단계가 오를수록 한 부분에 방울을 더 쓰고, 섞인 색이 많은 판을 고른다. */
 const TUNE=L=>({
- nAct:L<2?1:L<5?2:L<11?3:4,
- fine:L>=8||(L>=4&&L%2===0),
- decoys:L>=10?2:L>=4?1:0,
- twins:L>=20?2:L>=8?1:0,
- dry:L>=24?2:L>=14?1:0,
- clear:L>=28?2:L>=20?1:0,
- light:L>=26,
- extra:L>=6?1:0,
- perDrop:Math.max(7,22-L*1.5),
- mixBonus:Math.min(40,12+L*2)});
+ nAct:L<3?1:L<8?2:L<16?3:4,
+ fine:L>=14||(L>=7&&L%3===0),
+ decoys:L>=16?2:L>=7?1:0,
+ twins:L>=24?2:L>=10?1:0,
+ dry:L>=30?2:L>=17?1:0,
+ clear:L>=34?2:L>=23?1:0,
+ light:L>=29,
+ extra:L>=10?1:0,
+ perDrop:Math.max(9,22-L),
+ mixBonus:Math.min(34,12+L*1.5)});
 function genPic(L,pi){
  const T=TUNE(L),v=Math.floor(L/PICS.length);
  usePic(pi,T.fine);const P=PICS[pi];
@@ -235,7 +235,7 @@ function genPic(L,pi){
  const par=DRY.some(x=>x)||ds.some(d=>d[3]==='L')?ds.length:Math.min(ds.length,minDrops(g,items));
  return {goal:g,items,start,score:0,name:GNAME,rotate:false,geo:{pic:pi,fine:T.fine},par,pic:true,ds,
   lock:LOCK.slice(),twin:TWIN.slice(),dry:DRY.slice(),clear:CLEAR.slice(),
-  intro:{8:'twin',14:'dry',20:'clear',26:'light'}[L]||null,tut:L===0};
+  intro:{10:'twin',17:'dry',23:'clear',29:'light'}[L]||null,tut:L===0};
 }
 function genLevel(L){
  /* 모든 판이 그림 창이다. 도안을 차례로 돌린다. */
@@ -283,6 +283,7 @@ function genLevel(L){
 
 /* ---- 상태 ---- */
 let li=0,CUR=null,goal=[],cells=[],items=[],sel=0,hist=[],done=false,undone=false;
+let peek=false;
 let lit=0,litT=0,motes=[],anim=null,origins=[];
 const bc=document.getElementById('board'),bx=bc.getContext('2d');
 const gc=document.getElementById('goal'),gx=gc.getContext('2d');
@@ -533,7 +534,19 @@ function drawAll(ctx,cx,cy,rr,g,alphaMap,useGlow,bgFill){
   if(LOCK[i]&&!useGlow)a*=.55;else if(LOCK[i])a*=.55+.45*glow;
   withRot(ctx,REG[i],cx,cy,()=>drawRegion(ctx,i,cx,cy,rr,v,a,useGlow?glowOf(i):0))}
  drawSpecial(ctx,cx,cy,rr);
+ if(!(useGlow&&lit>0))drawDots(ctx,cx,cy,rr,g);
  leadNet(ctx,cx,cy,rr,glow,'over');
+}
+/* 색 점: 섞인 색(주황·초록·보라) 조각 가운데에만 든 원색 두 개를 작은 점으로 찍는다.
+ 비슷한 색(주황과 노랑 등)을 헷갈리지 않게 하려는 것. 원색 조각까지 찍으면 정답을 다 알려 주는 셈이라 빼 둔다.
+ 완성해 빛이 든 창과 창고 그림에는 찍지 않는다. */
+function drawDots(ctx,cx,cy,rr,g){
+ const DOT={R:'#E83A3A',Y:'#FFD21F',B:'#2F7FE0'};
+ for(let i=0;i<REG.length;i++){const v=g[i];if(![3,5,6].includes(v)||LOCK[i]||CLEAR[i])continue;
+  const cs=PRIMS.filter(c=>v&BIT[c]),x=cx+REG[i].cx*rr,y=cy+REG[i].cy*rr,r=rr*.028,gap=r*2.3;
+  cs.forEach((c,k)=>{const dx=(k-(cs.length-1)/2)*gap;
+   ctx.beginPath();ctx.arc(x+dx,y,r,0,7);ctx.fillStyle=DOT[c];ctx.fill();
+   ctx.lineWidth=rr*.009;ctx.strokeStyle='#1A120B';ctx.stroke()})}
 }
 /* 특수 유리 표시: 마르는 유리는 성에 낀 듯한 빗금, 쌍둥이는 짝마다 같은 색 고리 */
 function drawSpecial(ctx,cx,cy,rr){
@@ -564,7 +577,11 @@ function render(){
  amb.addColorStop(1,'#FFE3A800');
  bx.fillStyle=amb;bx.fillRect(0,0,W,W);bx.restore();
  ROT_VIS=drag&&drag.moved?{ring:drag.ring,ang:drag.ang}:WIG;
- drawAll(bx,CX,CY,RR,cells,anim,true,lit>0?mixHex('#181209','#0A0806',lit):'#181209');
+ /* 목표 그림을 누르면 창 자리에 목표를 크게 보여 준다(다시 누르거나 창을 누르면 돌아온다) */
+ if(peek&&!done){drawAll(bx,CX,CY,RR,goal,null,false,'#181209');
+  bx.save();bx.font=`${Math.round(RR*.075)}px Jua, sans-serif`;bx.textAlign='center';bx.fillStyle='#F3DFB6';
+  bx.fillText('목표 그림 · 누르면 돌아가요',CX,W-RR*.03);bx.restore()}
+ else drawAll(bx,CX,CY,RR,cells,anim,true,lit>0?mixHex('#181209','#0A0806',lit):'#181209');
  if(CUR&&CUR.rotate&&RINGS&&!done)drawDials();
  ROT_VIS=null;
  if(CUR&&CUR.hintRot&&!rotatedOnce&&!done){
@@ -658,10 +675,18 @@ function cat(face,hop,back){const el=$('cat');if(!el)return;el.src=CHAR.cat[face
 setInterval(()=>{if(!done&&CUR){const k=performance.now()-idleT>12000;if(k!==lastPaint){lastPaint=k;renderPaints()}}},1000);
 function local(e){const rc=bc.getBoundingClientRect();
  return {x:((e.clientX-rc.left)/rc.width*W-CX)/RR, y:((e.clientY-rc.top)/rc.height*W-CY)/RR}}
-function regionAt(p){for(let i=REG.length-1;i>=0;i--)if(inside(REG[i],p.x,p.y))return i;return -1}
+/* 누른 자리가 조각 안이 아니면(납선 위 등) 가장 가까운 조각을 고른다. 작은 조각도 손가락으로 누르기 쉽게 */
+function segDist(px,py,a,b){const dx=b[0]-a[0],dy=b[1]-a[1],t=Math.max(0,Math.min(1,((px-a[0])*dx+(py-a[1])*dy)/(dx*dx+dy*dy||1)));
+ return Math.hypot(px-a[0]-t*dx,py-a[1]-t*dy)}
+function regionAt(p){for(let i=REG.length-1;i>=0;i--)if(inside(REG[i],p.x,p.y))return i;
+ let best=-1,bd=0.07;
+ REG.forEach((r,i)=>{for(let k=0;k<r.pts.length;k++){const d=segDist(p.x,p.y,r.pts[k],r.pts[(k+1)%r.pts.length]);if(d<bd){bd=d;best=i}}});
+ return best}
 function angDiff(a,b){let d=a-b;while(d>Math.PI)d-=Math.PI*2;while(d<-Math.PI)d+=Math.PI*2;return d}
+gc.addEventListener('click',()=>{if(done)return;peek=!peek;sPick();render()});
 bc.addEventListener('pointerdown',e=>{
  if(done)return;
+ if(peek){peek=false;render();return}
  const p=local(e),i=regionAt(p);
  const ring=(i>=0&&CUR.rotate&&REG[i].ring>0)?REG[i].ring:-1;
  drag={i,ring,a0:Math.atan2(p.y,p.x),ang:0,moved:false,last:0};WIG=null;idleT=performance.now();
@@ -709,13 +734,15 @@ function place(at,k){
  const newMix=touched.find(i=>cells[i]!==before[i]&&[3,5,6,7].includes(cells[i]));
  if(newMix!==undefined)setTimeout(()=>fxName(newMix,cells[newMix]),230);
  if(touched.some(i=>before[i]&&before[i]!==cells[i]))setTimeout(sMix,180);
- anim={};touched.forEach(i=>anim[i]=before[i]?1:0);
+ const A={};anim=A;touched.forEach(i=>A[i]=before[i]?1:0);
  const dist={};dist[at]=0;let f=[at];
  for(let d=1;d<=it.r;d++){const nx=[];f.forEach(i=>ADJ[i].forEach(j=>{if(dist[j]===undefined){dist[j]=d;nx.push(j)}}));f=nx}
  touched.forEach(i=>{if(dist[i]===undefined)dist[i]=it.r});
  const t0=performance.now(),md=Math.max(1,it.r);
- (function step(){const t=(performance.now()-t0)/420;let alive=false;
-  touched.forEach(i=>{const p=Math.min(1,Math.max(0,(t-(dist[i]/md)*.5)/.5));anim[i]=p;if(p<1)alive=true});
+ /* 빠르게 연달아 떨어뜨리면 새 방울의 번짐이 이전 번짐을 넘겨받는다(이전 것은 여기서 멈춘다) */
+ (function step(){if(anim!==A){check();return}
+  const t=(performance.now()-t0)/420;let alive=false;
+  touched.forEach(i=>{const p=Math.min(1,Math.max(0,(t-(dist[i]/md)*.5)/.5));A[i]=p;if(p<1)alive=true});
   render();if(alive)requestAnimationFrame(step);else{anim=null;render();check()}})();
  if(it.n<=0){const n2=items.findIndex(o=>o.n>0);sel=n2<0?sel:n2}
  renderPaints()}
@@ -807,7 +834,7 @@ function buildGallery(){
  $('galEmpty').classList.add('hide');
 }
 function load(k){
- li=k;done=false;undone=false;hist=[];anim=null;lit=0;motes=[];origins=[];
+ li=k;done=false;undone=false;hist=[];peek=false;FX=[];anim=null;lit=0;motes=[];origins=[];
  document.body.classList.remove('lit');
  CUR=genLevel(k);goal=CUR.goal;items=CUR.items.map(o=>({...o}));
  cells=CUR.start?CUR.start.slice():new Array(REG.length).fill(0);sel=0;rotatedOnce=false;drag=null;WIG=null;idleT=performance.now();

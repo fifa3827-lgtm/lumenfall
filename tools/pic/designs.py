@@ -122,18 +122,19 @@ DESIGNS=[tulip,fish,house,tree,mushroom,butterfly,boat,icecream,rocket,heartball
 
 # ---- 두 번째 묶음: 계절 · 학교 · 동물 ----
 def snowman():
-    body=circ(0,0.42,0.42);head=circ(0,-0.30,0.30).difference(body)
-    hat=U([box(-0.22,-0.95,0.22,-0.62),box(-0.34,-0.64,0.34,-0.56)]).difference(head)
-    scarf=box(-0.30,-0.06,0.30,0.04).difference(body).union(box(-0.30,-0.06,0.30,0.04).intersection(head)).buffer(0)
+    body=circ(0,0.46,0.42);head=circ(0,-0.30,0.30).difference(body)
+    hat=U([box(-0.22,-0.98,0.22,-0.64),box(-0.36,-0.68,0.36,-0.56)]).difference(head)
+    # 목도리는 손가락으로 누를 수 있게 두껍게(높이 0.20)
+    scarf=box(-0.34,-0.10,0.34,0.10)
     head=head.difference(scarf);body=body.difference(scarf)
     return '눈사람',[(body,6,['blue','purple']),(head,4,['blue']),(scarf,2,['red','green']),(hat,3,['purple','red'])]
 
 def maple():
     pts=[(0,-0.95),(0.14,-0.55),(0.40,-0.70),(0.30,-0.30),(0.80,-0.40),(0.62,-0.10),(0.85,0.08),(0.40,0.20),(0.46,0.46),
-         (0.06,0.34),(0.06,0.95),(-0.06,0.95),(-0.06,0.34),(-0.46,0.46),(-0.40,0.20),(-0.85,0.08),(-0.62,-0.10),(-0.80,-0.40),
+         (0.11,0.34),(0.11,0.95),(-0.11,0.95),(-0.11,0.34),(-0.46,0.46),(-0.40,0.20),(-0.85,0.08),(-0.62,-0.10),(-0.80,-0.40),
          (-0.30,-0.30),(-0.40,-0.70),(-0.14,-0.55)]
     leaf=Polygon(pts).buffer(0)
-    stem=leaf.intersection(box(-1,0.36,1,1));leaf=leaf.difference(stem)
+    stem=leaf.intersection(box(-0.15,0.40,0.15,1));leaf=leaf.difference(stem)
     left=leaf.intersection(box(-1,-1,0,1));right=leaf.difference(left)
     return '단풍잎',[(left,6,['red','orange']),(right,6,['orange','yellow']),(stem,2,['orange'])]
 
@@ -148,13 +149,13 @@ def watermelon():
 def umbrella():
     can=path(bez((-0.85,-0.05),(-0.80,-0.80),(0.80,-0.80),(0.85,-0.05)))
     a=can.intersection(box(-1,-1,-0.28,1));c=can.intersection(box(0.28,-1,1,1));b=can.difference(a).difference(c)
-    handle=U([box(-0.04,-0.05,0.04,0.70),Point(-0.14,0.70).buffer(0.14).difference(Point(-0.14,0.70).buffer(0.06)).intersection(box(-1,0.70,1,1))])
+    handle=U([box(-0.08,-0.05,0.08,0.70),Point(-0.20,0.70).buffer(0.28).difference(Point(-0.20,0.70).buffer(0.12)).intersection(box(-1,0.70,1,1))])
     return '우산',[(a,4,['blue','purple']),(b,4,['yellow','red']),(c,4,['blue','green']),(handle,3,['orange'])]
 
 def pencil():
     body=box(-0.18,-0.45,0.18,0.55)
     tip=poly((-0.18,0.55),(0.18,0.55),(0,0.95))
-    lead=poly((-0.06,0.82),(0.06,0.82),(0,0.95));tip=tip.difference(lead)
+    lead=poly((-0.11,0.72),(0.11,0.72),(0,0.95));tip=tip.difference(lead)
     eraser=box(-0.18,-0.90,0.18,-0.60);band=box(-0.18,-0.60,0.18,-0.45)
     return '연필',[(body,5,['yellow','green']),(tip,2,['orange']),(lead,1,['purple']),(eraser,2,['red']),(band,1,['blue'])]
 
@@ -168,8 +169,8 @@ def bell():
 
 def book():
     L=poly((-0.85,-0.55),(-0.02,-0.45),(-0.02,0.65),(-0.85,0.55));R=poly((0.02,-0.45),(0.85,-0.55),(0.85,0.55),(0.02,0.65))
-    cover=poly((-0.90,-0.50),(0,-0.40),(0.90,-0.50),(0.90,0.70),(0,0.80),(-0.90,0.70)).difference(L).difference(R)
-    mark=poly((0.50,0.50),(0.64,0.50),(0.64,0.92),(0.57,0.84),(0.50,0.92)).difference(R).difference(cover)
+    cover=poly((-0.98,-0.50),(0,-0.40),(0.98,-0.50),(0.98,0.78),(0,0.90),(-0.98,0.78)).difference(L).difference(R)
+    mark=poly((0.44,0.50),(0.70,0.50),(0.70,1.02),(0.57,0.92),(0.44,1.02)).difference(R).difference(cover)
     return '책',[(L,6,['yellow','blue']),(R,6,['yellow','green']),(cover,4,['red','purple']),(mark,1,['green','red'])]
 
 def catface():
@@ -177,7 +178,7 @@ def catface():
     earL=poly((-0.66,-0.10),(-0.58,-0.88),(-0.18,-0.42));earR=poly((0.66,-0.10),(0.58,-0.88),(0.18,-0.42))
     ears=U([earL,earR]).difference(face)
     eyes=U([ell(-0.28,0.02,0.10,0.14),ell(0.28,0.02,0.10,0.14)])
-    nose=poly((-0.08,0.26),(0.08,0.26),(0,0.36))
+    nose=poly((-0.13,0.24),(0.13,0.24),(0,0.40))
     face=face.difference(eyes).difference(nose)
     return '고양이 얼굴',[(face,8,['orange','yellow']),(ears,4,['orange','red']),(eyes,2,['green','blue']),(nose,1,['red'])]
 
@@ -193,7 +194,7 @@ def owl():
 def turtle():
     shell=path(bez((-0.62,0.20),(-0.60,-0.62),(0.60,-0.62),(0.62,0.20)))
     head=circ(0.82,0.05,0.18).difference(shell)
-    legs=U([ell(-0.42,0.34,0.14,0.12),ell(0.40,0.34,0.14,0.12),poly((-0.62,0.10),(-0.90,0.18),(-0.62,0.24))]).difference(shell)
+    legs=U([ell(-0.42,0.34,0.14,0.12),ell(0.40,0.34,0.14,0.12),poly((-0.60,0.04),(-0.96,0.18),(-0.60,0.30))]).difference(shell)
     mid=shell.intersection(circ(0,-0.14,0.26));shell=shell.difference(mid)
     return '거북',[(shell,7,['green','blue']),(mid,2,['yellow','orange']),(U([head,legs]),4,['green','yellow'])]
 
@@ -202,7 +203,7 @@ def cactus():
     armL=U([box(-0.56,-0.36,-0.18,-0.18),box(-0.56,-0.66,-0.38,-0.18),circ(-0.47,-0.66,0.09)])
     armR=U([box(0.18,-0.12,0.56,0.06),box(0.38,-0.48,0.56,0.06),circ(0.47,-0.48,0.09)])
     pot=poly((-0.42,0.40),(0.42,0.40),(0.32,0.92),(-0.32,0.92))
-    flower=circ(0,-0.96,0.10).difference(main)
+    flower=circ(0,-0.98,0.15).difference(main)
     return '선인장',[(main,5,['green']),(U([armL,armR]).difference(main),4,['green','yellow']),(pot,4,['orange','red','purple']),(flower,1,['red','purple'])]
 
 def cupcake():
@@ -214,15 +215,14 @@ def cupcake():
 def balloon():
     env=path(bez((0,0.30),(-0.80,0.00),(-0.70,-0.95),(0,-0.95)),bez((0,-0.95),(0.70,-0.95),(0.80,0.00),(0,0.30)))
     s1=env.intersection(box(-1,-1,-0.22,1));s3=env.intersection(box(0.22,-1,1,1));s2=env.difference(s1).difference(s3)
-    basket=box(-0.18,0.55,0.18,0.85)
-    ropes=U([poly((-0.14,0.22),(-0.10,0.22),(-0.14,0.55),(-0.18,0.55)),poly((0.10,0.22),(0.14,0.22),(0.18,0.55),(0.14,0.55))]).difference(env)
-    return '열기구',[(s1,4,['red','blue']),(s2,4,['yellow']),(s3,4,['red','green']),(U([basket,ropes]),2,['orange'])]
+    basket=box(-0.24,0.46,0.24,0.86)
+    return '열기구',[(s1,4,['red','blue']),(s2,4,['yellow']),(s3,4,['red','green']),(basket,2,['orange'])]
 
 def snail():
     shell=circ(0.10,-0.10,0.50)
     swirl=circ(0.14,-0.14,0.24)
     body=path(bez((-0.90,0.45),(-0.80,0.20),(-0.40,0.40),(0.60,0.40)),[(0.60,0.40),(0.70,0.58),(-0.90,0.58)]).difference(shell)
-    head=U([circ(-0.78,0.20,0.14),box(-0.80,-0.30,-0.76,0.10),box(-0.66,-0.26,-0.62,0.12)]).difference(body)
+    head=circ(-0.74,0.18,0.18).difference(body)
     shell=shell.difference(swirl)
     return '달팽이',[(shell,7,['orange','purple']),(swirl,2,['yellow','red']),(U([body,head]),4,['green','yellow'])]
 
