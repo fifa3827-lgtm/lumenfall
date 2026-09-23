@@ -118,7 +118,9 @@ body.lit[data-time="night"]{background:radial-gradient(120% 90% at 50% 6%,#2A396
 /* 창턱: 창 바로 아래 나무 턱. 별로 얻은 장식을 올려 둔다(누름은 통과) */
 .sill{position:relative;width:min(96vw,410px);height:0;margin-top:-8px;display:flex;justify-content:space-between;align-items:flex-end;
  padding:0 8px;pointer-events:none;z-index:2}
-.sill.has{height:50px;margin-top:-14px}
+.sill.has{height:50px;margin-top:-14px;margin-bottom:14px}
+/* 고른 방울이 위로 떠도 창턱 위로 올라오게 */
+.paints{position:relative;z-index:3}
 .sill.has::after{content:"";position:absolute;left:0;right:0;bottom:-6px;height:9px;border-radius:2px;
  background:linear-gradient(180deg,#8A6440,#5A3E26);box-shadow:0 4px 8px #0008,inset 0 1px 0 #B08658;z-index:-1}
 .sill .side{display:flex;gap:4px;align-items:flex-end}
