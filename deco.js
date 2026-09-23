@@ -61,7 +61,7 @@ const DECO=[
 
 {id:'bowl',name:'어항',need:38,svg:`
 <defs><radialGradient id="dbw-w" cx=".4" cy=".35" r=".8"><stop offset="0" stop-color="#B8E3F5"/><stop offset="1" stop-color="#4E9CC9"/></radialGradient></defs>
-<path d="M22 14H42C42 17 40 18 40 20C49 23 55 31 55 40C55 52 45 61 32 61C19 61 9 52 9 40C9 31 15 23 24 20C24 18 22 17 22 14Z" fill="#EAF7FC" fill-opacity=".22" stroke="${DECO_LINE}" stroke-width="1.6"/>
+<path d="M22 14H42C42 17 40 18 40 20C49 23 55 31 55 40C55 52 45 61 32 61C19 61 9 52 9 40C9 31 15 23 24 20C24 18 22 17 22 14Z" fill="#D8EEF7" fill-opacity=".4" stroke="${DECO_LINE}" stroke-width="1.6"/>
 <path d="M11 36C11 36 20 33 32 36C44 39 53 36 53 36C54 38 55 39 55 40C55 52 45 61 32 61C19 61 9 52 9 40Z" fill="url(#dbw-w)" stroke="${DECO_LINE}" stroke-width="1.4"/>
 <path class="dfish" d="M25 47C28 42 35 42 38 47C35 52 28 52 25 47ZM38 47L44 43V51Z" fill="#F08A3C" stroke="${DECO_LINE}" stroke-width="1.3" stroke-linejoin="round"/>
 <circle cx="29" cy="46" r="1.2" fill="${DECO_LINE}"/>
