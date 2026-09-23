@@ -39,6 +39,9 @@ body.lit .boardwrap{filter:drop-shadow(0 0 46px #F5CE8A4a) drop-shadow(0 0 120px
 .p{border:0;cursor:pointer;position:relative;padding:0;background:center/contain no-repeat;
  transition:transform .16s cubic-bezier(.34,1.4,.64,1);filter:drop-shadow(0 4px 6px #0008)}
 .p.on{transform:translateY(-9px) scale(1.1);filter:drop-shadow(0 0 10px #FFE7B066) drop-shadow(0 6px 8px #0008)}
+/* 빛 방울: 밝고 옅게, 머리 위에 빛 무늬 */
+.p.light{filter:brightness(1.45) saturate(.55) drop-shadow(0 0 8px #FFF6D8aa)}
+.p.light::before{content:"✦";position:absolute;left:50%;top:-14px;transform:translateX(-50%);font-size:14px;color:#FFF3C8;text-shadow:0 0 6px #FFE9A0}
 .p:disabled{opacity:.55;cursor:default;filter:grayscale(.35) drop-shadow(0 3px 5px #0007)}
 .rng{font-size:11px;font-weight:700;color:#E6D5B8;text-shadow:0 1px 2px #0007}
 .cnt{position:absolute;top:-3px;right:-3px;width:19px;height:19px;border-radius:50%;
@@ -67,11 +70,25 @@ body.lit .paints,body.lit .tools{display:none}
 .sheettitle{font-size:13px;font-weight:700;letter-spacing:3px;color:#C9B89E}
 .sheettitle span{margin-left:8px;letter-spacing:0;font-size:11px;color:#7E7060}
 .sheetbar button{border:0;background:none;color:#7E7060;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
-.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:14px;
- align-content:start;overflow-y:auto;flex:1;padding:4px 2px 24px}
-.gitem{display:flex;flex-direction:column;align-items:center;gap:5px}
-.gitem canvas{width:100%;height:auto;border-radius:3px;box-shadow:0 4px 14px #00000077}
-.gitem span{font-size:10px;font-weight:700;color:#6B5F4E}
+.gallery{display:flex;flex-direction:column;gap:22px;overflow-y:auto;flex:1;padding:4px 2px 24px}
+/* 묶음 하나가 벽 한 면. 창은 끈에 매달린 나무 액자에 건다 */
+.gset h3{margin:0 0 10px;font-weight:400;font-size:15px;color:#E6D5B8;letter-spacing:1px;display:flex;align-items:baseline;gap:8px}
+.gset h3 span{font-size:11px;color:#8E7F6A;letter-spacing:0}
+.gset.full h3 span{color:#F5CE8A}
+.wall{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px 12px;padding:14px 10px 12px;border-radius:4px;
+ background:linear-gradient(180deg,#2A2119,#1C1611);box-shadow:inset 0 2px 10px #0008}
+.gset.full .wall{box-shadow:inset 0 2px 10px #0008,0 0 0 1px #F5CE8A55,0 0 24px #F5CE8A22}
+.gitem{display:flex;flex-direction:column;align-items:center;gap:6px;position:relative}
+.gitem::before{content:"";position:absolute;top:-12px;left:50%;width:34%;height:14px;transform:translateX(-50%);
+ border:1px solid #8E7A5A;border-bottom:0;clip-path:polygon(50% 0,100% 100%,0 100%);background:none}
+.frame{width:100%;padding:5px;border-radius:3px;background:linear-gradient(145deg,#7A5B3C,#4A3421);box-shadow:0 5px 12px #0009,inset 0 0 0 1px #9C7A52}
+.frame canvas{display:block;width:100%;height:auto;border-radius:1px;background:#0F0B07}
+.gitem.todo .frame{background:linear-gradient(145deg,#3A2E23,#2A2119);box-shadow:inset 0 0 0 1px #4A3B2C}
+.gitem.todo canvas{opacity:.55}
+.gitem span{font-size:11px;color:#C9B89E;text-align:center;line-height:1.35}
+.gitem span b{display:block;font-weight:400;color:#F5CE8A;letter-spacing:1px;font-size:10px}
+.gitem span i{font-style:normal;font-size:10px;color:#8E7F6A;margin-left:3px}
+.gitem.todo span{color:#6B5F4E}
 .empty{color:#6B5F4E;font-size:12.5px;font-weight:600;line-height:1.7;text-align:center;margin:auto}
 .empty.hide{display:none}
 .title,.msg,#sub,.rng,.cnt,.goallab,.hb button,.tools button,.next,.sheettitle,.badge{font-weight:400!important}
