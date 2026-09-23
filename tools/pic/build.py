@@ -17,7 +17,7 @@ def split(poly,k,rng):
     out=[]
     for c in cells:
         if c.geom_type!='Polygon':c=max(c.geoms,key=lambda g:g.area)
-        out.append(c.simplify(0.004))
+        out.append(c.simplify(0.006))
     return out
 def comps(g):
     return [g] if g.geom_type=='Polygon' else sorted([x for x in g.geoms if x.area>0.012],key=lambda x:-x.area)
@@ -65,7 +65,7 @@ for fn in DESIGNS:
         if key=='base':
             xs=[p[0] for o in outlines for p in o];ys=[p[1] for o in outlines for p in o]
             cx=(min(xs)+max(xs))/2;cy=(min(ys)+max(ys))/2;sc=1.80/max(max(xs)-min(xs),max(ys)-min(ys))
-        T=lambda p:[round((p[0]-cx)*sc,4),round((p[1]-cy)*sc,4)]
+        T=lambda p:[round((p[0]-cx)*sc,3),round((p[1]-cy)*sc,3)]
         for r in regs:
             r['pts']=[T(p) for p in r['pts']];r['cx'],r['cy']=T([r['cx'],r['cy']])
         out[key]={'regs':regs,'adj':adj}

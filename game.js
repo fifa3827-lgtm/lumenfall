@@ -782,7 +782,13 @@ let SAVED=[];
 let STARS={};
 function loadSaved(){try{const v=localStorage.getItem('lumenfall:pic-won');SAVED=v?JSON.parse(v):[]}catch(e){SAVED=[]}
  try{STARS=JSON.parse(localStorage.getItem('lumenfall:pic-stars')||'{}')||{}}catch(e){STARS={}}}
+/* 창고용 완성 그림 기억: 판을 다시 만들지 않고 바로 그리려고 목표 색과 조각 모양 종류를 적어 둔다 */
+let SNAP={};
+try{SNAP=JSON.parse(localStorage.getItem('lumenfall:pic-snap')||'{}')||{}}catch(e){SNAP={}}
+function snapOf(k,lv){return {g:lv.goal.join(''),f:lv.geo.fine?1:0,c:(lv.clear||[]).map((x,i)=>x?i:-1).filter(i=>i>=0)}}
+function saveSnap(k,lv){SNAP[k]=snapOf(k,lv);try{localStorage.setItem('lumenfall:pic-snap',JSON.stringify(SNAP))}catch(e){}}
 function saveWon(k,st){
+ if(CUR&&CUR.pic)saveSnap(k,CUR);
  if(st&&(STARS[k]||0)<st){STARS[k]=st;try{localStorage.setItem('lumenfall:pic-stars',JSON.stringify(STARS))}catch(e){}}
  if(SAVED.includes(k))return;SAVED.push(k);SAVED.sort((a,b)=>a-b);
  try{localStorage.setItem('lumenfall:pic-won',JSON.stringify(SAVED))}catch(e){}}
@@ -798,12 +804,15 @@ function updGal(){$('galN').textContent=SAVED.length;
  $('galEmpty').classList.toggle('hide',SAVED.length>0)}
 /* 창고: 그림을 묶음으로 나눠 벽에 건다. 한 번이라도 완성한 그림은 가장 최근 창을, 아직 못 만든 그림은 납선만 보여 준다. */
 const SETS=[
- ['정원',['튤립','나무','버섯','나비','선인장','달팽이']],
- ['하늘과 바다',['물고기','돛단배','로켓','열기구','별','해님']],
- ['집과 학교',['집','연필','종','책','우산','하트 풍선']],
- ['맛있는 것',['아이스크림','수박','컵케이크']],
- ['동물 친구',['고양이 얼굴','부엉이','거북']],
- ['계절',['눈사람','단풍잎']]];
+ ["정원", ["튤립", "나무", "버섯", "나비", "선인장", "달팽이", "해바라기", "네잎클로버", "벚꽃", "무당벌레", "꿀벌"]],
+ ["과일과 채소", ["사과", "체리", "딸기", "포도", "당근", "수박", "호박"]],
+ ["맛있는 것", ["아이스크림", "컵케이크", "케이크", "머그컵"]],
+ ["하늘과 우주", ["해님", "별", "로켓", "열기구", "무지개", "초승달", "토성", "구름과 번개", "연"]],
+ ["바다", ["물고기", "돛단배", "고래", "게", "문어", "잠수함", "등대"]],
+ ["탈것", ["자동차", "버스", "기차", "비행기", "트럭"]],
+ ["집과 학교", ["집", "연필", "종", "책", "우산", "책가방", "시계", "전구", "물감 팔레트", "트로피"]],
+ ["동물 친구", ["고양이 얼굴", "부엉이", "거북", "여우", "곰", "토끼", "펭귄", "오리", "병아리"]],
+ ["축제와 계절", ["눈사람", "단풍잎", "크리스마스트리", "선물상자", "왕관", "성", "텐트", "하트 풍선", "열쇠", "촛불"]]];
 function drawThumb(cv,g,lit1){
  const c=cv.getContext('2d'),S=cv.width;c.clearRect(0,0,S,S);
  const sl=lit;lit=lit1?1:0;drawAll(c,S/2,S/2,S*.45,g,null,!!lit1,'#181209');lit=sl;
@@ -823,8 +832,10 @@ function buildGallery(){
    const cv=document.createElement('canvas');cv.width=cv.height=200;
    const fr=document.createElement('div');fr.className='frame';fr.appendChild(cv);d.appendChild(fr);
    const lab=document.createElement('span');
-   if(ks.length){const k=Math.max(...ks),lv=genLevel(k),best=Math.max(...ks.map(x=>STARS[x]||1));
-    drawThumb(cv,lv.goal,true);lab.innerHTML=`${n}<b>${starStr(best)}</b>${ks.length>1?`<i>${ks.length}장</i>`:''}`}
+   if(ks.length){const k=Math.max(...ks),best=Math.max(...ks.map(x=>STARS[x]||1));
+    if(!SNAP[k])saveSnap(k,genLevel(k));
+    const sn=SNAP[k];usePic(pi,!!sn.f);sn.c.forEach(i=>CLEAR[i]=true);
+    drawThumb(cv,sn.g.split('').map(Number),true);lab.innerHTML=`${n}<b>${starStr(best)}</b>${ks.length>1?`<i>${ks.length}장</i>`:''}`}
    else{usePic(pi,false);drawThumb(cv,new Array(REG.length).fill(0),false);lab.textContent='?'}
    d.appendChild(lab);wall.appendChild(d)});
   wrap.appendChild(sec)});
