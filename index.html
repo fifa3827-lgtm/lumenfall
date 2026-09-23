@@ -29,6 +29,16 @@ header{width:100%;display:flex;justify-content:space-between;align-items:flex-st
 .cat{position:absolute;right:0;bottom:2px;height:112px;width:auto;z-index:5;pointer-events:none;
  filter:drop-shadow(0 6px 10px #0007);transform-origin:50% 100%}
 .cat.hop{animation:cathop .6s cubic-bezier(.3,1.6,.5,1)}
+/* 조는 고양이 머리 위 z, 기쁜 고양이 머리 위 하트 */
+.catz{position:absolute;right:26px;bottom:104px;z-index:6;pointer-events:none;opacity:0;transition:opacity .6s;font-family:Jua,sans-serif}
+.catz.on{opacity:1}
+.catz b{position:absolute;font-weight:400;color:#E6EEFF;text-shadow:0 0 6px #8CA8FF;animation:zfloat 3s ease-in infinite;opacity:0}
+.catz b:nth-child(1){font-size:17px;animation-delay:0s}.catz b:nth-child(2){font-size:21px;animation-delay:1s}.catz b:nth-child(3){font-size:26px;animation-delay:2s}
+@keyframes zfloat{0%{transform:translate(0,0);opacity:0}20%{opacity:1}100%{transform:translate(18px,-34px);opacity:0}}
+.cathearts{position:absolute;right:0;bottom:98px;width:110px;height:10px;z-index:6;pointer-events:none}
+.cathearts i{position:absolute;bottom:0;width:18px;height:17px;animation:heartup 1.8s ease-out forwards}
+.cathearts svg{width:100%;height:100%;display:block}
+@keyframes heartup{0%{transform:translateY(0) scale(.4);opacity:0}20%{opacity:1}100%{transform:translateY(-70px) scale(1.1);opacity:0}}
 @keyframes cathop{0%{transform:translateY(0) scale(1)}35%{transform:translateY(-10px) scale(1.04,.97)}100%{transform:translateY(0) scale(1)}}
 .goallab{font-size:14px;font-weight:600;color:#F6E8D0;line-height:1.55;text-shadow:0 1px 3px #0008}
 .boardwrap{width:min(92vw,390px,50vh);transition:filter 1.4s}
@@ -181,7 +191,17 @@ body.lit[data-time="night"]{background:radial-gradient(120% 90% at 50% 6%,#2A396
 .dpuff{animation:puff 2.4s ease-out infinite}
 @keyframes puff{0%{transform:translate(4px,8px) scale(.5);opacity:0}30%{opacity:.8}100%{transform:translate(-2px,-4px) scale(1.2);opacity:0}}
 /* 마을 지도: 묶음마다 건물 하나 */
-.village{display:block;width:100%;height:auto;border-radius:4px;box-shadow:inset 0 2px 10px #0008}
+.village{display:block;width:100%;height:auto;border-radius:4px;box-shadow:inset 0 2px 10px #0008;cursor:zoom-in}
+.vbig{position:fixed;inset:0;z-index:60;background:#07050A;display:flex;flex-direction:column;gap:12px;padding:18px 0 26px;
+ opacity:0;pointer-events:none;transition:opacity .3s}
+.vbig.open{opacity:1;pointer-events:auto}
+.vbig .sheetbar{padding:0 16px}
+.vbigscroll{overflow-x:auto;overflow-y:hidden;flex:0 0 auto;-webkit-overflow-scrolling:touch}
+.vbigscroll .village{height:min(64vh,520px);width:auto;max-width:none;cursor:default;border-radius:0;margin:0 auto}
+.vbig .dnote{text-align:center;padding:0 16px}
+@media (min-aspect-ratio:3/2){.vbigscroll .village{height:auto;width:100vw}}
+.gset.flash .wall{animation:setflash 1.4s ease-out}
+@keyframes setflash{0%{box-shadow:inset 0 2px 10px #0008,0 0 0 2px #F5CE8Acc,0 0 30px #F5CE8A88}100%{box-shadow:inset 0 2px 10px #0008}}
 .vb{transition:filter .6s}
 .vb.off{filter:saturate(.3) brightness(.45)}
 .von{filter:url(#vglow)}
@@ -191,8 +211,8 @@ body.lit[data-time="night"]{background:radial-gradient(120% 90% at 50% 6%,#2A396
 .vb.full .vflag{transform-box:fill-box;transform-origin:0 50%;animation:flag 1.6s ease-in-out infinite}
 @keyframes flag{0%,100%{transform:scaleX(1)}50%{transform:scaleX(.8)}}
 .vlist{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px 10px;margin-top:10px}
-.vlist div{font-size:11px;color:#8E7F6A;display:flex;flex-direction:column;gap:3px}
-.vlist div.full{color:#F5CE8A}
+.vlist button{border:0;background:none;padding:2px 0;text-align:left;cursor:pointer;font:inherit;font-size:11px;color:#8E7F6A;display:flex;flex-direction:column;gap:3px}
+.vlist button.full{color:#F5CE8A}
 .vlist small{font-size:9.5px;color:#6B5F4E}
 .vlist i{display:block;height:4px;border-radius:2px;background:#2E251C;overflow:hidden}
 .vlist i b{display:block;height:100%;background:linear-gradient(90deg,#C9923E,#F5CE8A)}
@@ -212,7 +232,7 @@ body.lit[data-time="night"]{background:radial-gradient(120% 90% at 50% 6%,#2A396
     <div class="goallab">이 창이 되도록<br>물감을 떨어뜨리세요<span class="par" id="par"></span><span class="peekhint">그림을 누르면 크게 보여요</span></div>
   </div>
   <div class="boardwrap"><canvas id="board" width="1000" height="1000"></canvas></div>
-  <div class="sill"><div class="side" id="sill"></div><img class="cat" id="cat" alt="" src=""></div>
+  <div class="sill"><div class="side" id="sill"></div><img class="cat" id="cat" alt="" src=""><div class="catz" id="catz"><b>z</b><b>z</b><b>Z</b></div><div class="cathearts" id="cathearts"></div></div>
   <div class="paints" id="paints"></div>
   <div class="tools"><button id="undoBtn">되돌리기</button></div>
   <div class="msg" id="msg"></div>
@@ -233,6 +253,11 @@ body.lit[data-time="night"]{background:radial-gradient(120% 90% at 50% 6%,#2A396
     <button id="closeLv">닫기</button>
   </div>
   <div class="lvlist" id="lvList"></div>
+</div>
+<div class="vbig" id="vbig" aria-hidden="true">
+  <div class="sheetbar"><div class="sheettitle">마을</div><button id="vbigClose">닫기</button></div>
+  <div class="vbigscroll" id="vbigScroll"></div>
+  <p class="dnote">옆으로 밀어 보세요 · 건물을 누르면 그 묶음 그림으로 가요</p>
 </div>
 <script src="assets.js"></script>
 <script src="deco.js"></script>

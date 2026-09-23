@@ -674,9 +674,23 @@ function renderPaints(){let h='';
 let drag=null,rotatedOnce=false,hintLoop=false,tutLoop=false;
 /* 창턱 고양이: 판이 열리면 궁금, 조금 뒤 기본, 탁해지면 궁금, 완성하면 기쁨 */
 let catT=0,lastPaint='';
-function cat(face,hop,back){const el=$('cat');if(!el)return;el.src=CHAR.cat[face];
+/* 새 표정 그림이 없으면 비슷한 표정으로 대신한다 */
+const CATOK={base:1,curious:1,happy:1,sunny:1,surprised:1},CATALT={sleepy:'base',yawn:'curious',wave:'happy',love:'sunny'};
+['sleepy','yawn','wave','love'].forEach(k=>{if(!CHAR.cat[k])return;const im=new Image();im.onload=()=>CATOK[k]=1;im.src=CHAR.cat[k]});
+const catSrc=f=>CHAR.cat[CATOK[f]?f:(CATALT[f]||'base')];
+let catNap=false;
+function cat(face,hop,back){const el=$('cat');if(!el)return;el.src=catSrc(face);
+ if(face!=='sleepy'&&catNap){catNap=false;$('catz').classList.remove('on')}
  if(hop){el.classList.remove('hop');void el.offsetWidth;el.classList.add('hop')}
  clearTimeout(catT);if(back)catT=setTimeout(()=>{if(!done)el.src=CHAR.cat.base},back)}
+/* 20초 동안 아무것도 하지 않으면 고양이가 꾸벅꾸벅 존다. 화면을 누르면 하품하며 깬다 */
+setInterval(()=>{if(!done&&CUR&&!catNap&&!document.hidden&&performance.now()-idleT>20000){catNap=true;cat('sleepy');catNap=true;$('catz').classList.add('on')}},1000);
+document.addEventListener('pointerdown',()=>{if(catNap){catNap=false;$('catz').classList.remove('on');cat('yawn',true,1400)}},true);
+/* 고양이 머리 위로 하트가 몽글몽글 */
+function catHearts(n){const box=$('cathearts');if(!box)return;
+ for(let i=0;i<n;i++)setTimeout(()=>{const h=document.createElement('i');h.style.left=(20+Math.random()*50)+'%';h.style.animationDuration=(1.4+Math.random()*.8)+'s';
+  h.innerHTML='<svg viewBox="0 0 24 22"><path d="M12 21C5 15 1 11 1 6.5 1 3.4 3.4 1 6.4 1c2.2 0 4 1.2 5.6 3.2C13.6 2.2 15.4 1 17.6 1 20.6 1 23 3.4 23 6.5 23 11 19 15 12 21Z" fill="#FF8FA6" stroke="#B8475E" stroke-width="1.4"/></svg>';
+  box.appendChild(h);setTimeout(()=>h.remove(),2400)},i*180)}
 setInterval(()=>{if(!done&&CUR){const k=performance.now()-idleT>12000;if(k!==lastPaint){lastPaint=k;renderPaints()}}},1000);
 function local(e){const rc=bc.getBoundingClientRect();
  return {x:((e.clientX-rc.left)/rc.width*W-CX)/RR, y:((e.clientY-rc.top)/rc.height*W-CY)/RR}}
@@ -763,10 +777,10 @@ function check(){
  litT=performance.now();
  (function b(){lit=Math.min(1,(performance.now()-litT)/1700);
   motes.forEach(m=>{m.y+=m.vy;if(m.y<CY-RR)m.y=CY+RR});render();
-  if(lit<1)requestAnimationFrame(b);else{$('nextBtn').classList.add('show');
+  if(lit<1)requestAnimationFrame(b);else{$('nextBtn').classList.add('show');setTimeout(()=>{if(done)cat('wave',true)},2600);
    (function l(){if(!done)return;motes.forEach(m=>{m.y+=m.vy;if(m.y<CY-RR)m.y=CY+RR});render();requestAnimationFrame(l)})()}})()}
 $('undoBtn').addEventListener('click',()=>{if(!hist.length||done)return;
- undone=true;const h=hist.pop();cells=h.cells;items=h.items;sel=h.sel;origins=h.origins||[];sUndo();$('msg').textContent='';render()});
+ undone=true;const h=hist.pop();cells=h.cells;items=h.items;sel=h.sel;origins=h.origins||[];sUndo();$('msg').textContent='';render();cat('curious',false,1500)});
 $('galBtn').addEventListener('click',()=>{buildGallery();$('sheet').classList.add('open');
  $('sheet').setAttribute('aria-hidden','false');sPick()});
 $('closeGal').addEventListener('click',()=>{$('sheet').classList.remove('open');
@@ -834,7 +848,7 @@ function buildGallery(){
  let have=0;
  SETS.forEach(([title,names])=>{
   const got=names.filter(n=>SAVED.some(k=>k%N===byName[n])).length;have+=got;
-  const sec=document.createElement('section');sec.className='gset'+(got===names.length?' full':'');
+  const sec=document.createElement('section');sec.className='gset'+(got===names.length?' full':'');sec.dataset.set=title;
   sec.innerHTML=`<h3>${title}<span>${got} / ${names.length}${got===names.length?' · 모두 모았어요':''}</span></h3><div class="wall"></div>`;
   const wall=sec.querySelector('.wall');
   names.forEach(n=>{
@@ -864,12 +878,29 @@ function villageSection(){
  const have=setHave(),full=VILLAGE.filter(b=>have[b.set]&&have[b.set][0]>=have[b.set][1]).length;
  const sec=document.createElement('section');sec.className='gset';
  sec.innerHTML=`<h3>마을<span>불 켜진 집 ${full} / ${VILLAGE.length}</span></h3>`+villageSVG(have)+
-  `<div class="vlist">${VILLAGE.map(b=>{const [g,n]=have[b.set];return `<div class="${g>=n?'full':''}">${b.name} ${g}/${n}<small>${b.set}</small><i><b style="width:${Math.round(100*g/n)}%"></b></i></div>`}).join('')}</div>`;
+  `<div class="vlist">${VILLAGE.map((b,bi)=>{const [g,n]=have[b.set];return `<button data-i="${bi}" class="${g>=n?'full':''}">${b.name} ${g}/${n}<small>${b.set}</small><i><b style="width:${Math.round(100*g/n)}%"></b></i></button>`}).join('')}</div>`+
+  `<p class="dnote">마을 그림을 누르면 크게 보여요. 건물 이름을 누르면 그 묶음 그림으로 가요.</p>`;
+ sec.querySelector('.village').addEventListener('click',()=>openVillage(have));
+ sec.querySelectorAll('.vlist button').forEach(b=>b.addEventListener('click',()=>goSet(VILLAGE[+b.dataset.i].set)));
  return sec}
+/* 마을 크게 보기: 옆으로 미는 파노라마. 건물을 누르면 그 묶음 벽으로 간다 */
+function openVillage(have){
+ const box=$('vbigScroll');box.innerHTML=villageSVG(have);
+ box.querySelectorAll('.vb').forEach(g=>{g.style.cursor='pointer';g.addEventListener('click',e=>{e.stopPropagation();closeVillage();goSet(VILLAGE[+g.dataset.i].set)})});
+ $('vbig').classList.add('open');sPick();
+ requestAnimationFrame(()=>{box.scrollLeft=(box.scrollWidth-box.clientWidth)/2});
+}
+function closeVillage(){$('vbig').classList.remove('open')}
+function goSet(name){
+ const sec=[...document.querySelectorAll('#gallery .gset')].find(s=>s.dataset.set===name);if(!sec)return;
+ sec.scrollIntoView({behavior:'smooth',block:'start'});
+ sec.classList.remove('flash');void sec.offsetWidth;sec.classList.add('flash');sPick();
+}
+$('vbigClose').addEventListener('click',closeVillage);
 function gotHouse(before){
  const now=setHave(),fresh=VILLAGE.filter(b=>{const a=before[b.set],c=now[b.set];return c[0]>=c[1]&&a[0]<a[1]});
  if(!fresh.length)return;
- setTimeout(()=>{tone(660,.4,'triangle',.06);tone(990,.5,'sine',.05,0,.18);buzz([0,20,60,20])},2200);
+ setTimeout(()=>{tone(660,.4,'triangle',.06);tone(990,.5,'sine',.05,0,.18);buzz([0,20,60,20]);cat('love',true);catHearts(6)},2200);
  $('msg').insertAdjacentHTML('beforeend',`<small class="newdeco">「${fresh[0].set}」 그림을 다 모았어요!<br>마을 ${fresh.map(b=>b.name).join(' · ')}에 불이 켜졌어요 · 창고에서 보세요</small>`);
 }
 /* ---------- 창턱 장식 ---------- */
@@ -891,7 +922,7 @@ function gotDeco(before){
  let placed=false;
  fresh.forEach(d=>{if(SILL.length<SILL_MAX&&!SILL.includes(d.id)){SILL.push(d.id);placed=true}});
  saveSill();
- setTimeout(()=>{renderSill(fresh[fresh.length-1].id);tone(1320,.3,'sine',.06);buzz(12)},1900);
+ setTimeout(()=>{renderSill(fresh[fresh.length-1].id);tone(1320,.3,'sine',.06);buzz(12);cat('surprised',true);setTimeout(()=>{if(done)cat('happy',true)},900)},1900);
  $('msg').insertAdjacentHTML('beforeend',`<small class="newdeco">새 장식 「${fresh.map(d=>d.name).join('」 「')}」을 얻었어요`+
   (placed?'<br>창턱에 올려 두었어요':'<br>창고에서 창턱에 올릴 수 있어요')+'</small>');
 }

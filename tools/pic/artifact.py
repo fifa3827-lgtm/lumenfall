@@ -5,7 +5,7 @@ h=open('index.html').read()
 head=h[h.index('<head>')+6:h.index('</head>')];body=h[h.index('<body>')+6:h.index('</body>')]
 head=re.sub(r'<meta[^>]*>\n?','',head).replace('<title>Lumenfall</title>','<title>Lumenfall · 그림 창</title>')
 b64=lambda p,m='image/png':'data:%s;base64,%s'%(m,base64.b64encode(open(p,'rb').read()).decode())
-cat={k:b64(f'assets/char/cat_{k}.png') for k in ['base','curious','happy','sunny','surprised']}
+cat={k:b64(f'assets/char/cat_{k}.png') for k in ['base','curious','happy','sunny','surprised','sleepy','yawn','wave','love']}
 drop={c:{e:b64(f'assets/char/drop{c}_{e}.png') for e in ['base','excited','sleepy','asleep']} for c in 'RYB'}
 assets=('const TEX='+json.dumps({k:b64(f'assets/glass_{k}.png') for k in 'RYBOGPN'})+';\nconst AUD='+
  json.dumps({k:b64(f'assets/{k}.mp3','audio/mpeg') for k in ['bgm','win','drop','mix']})+';\nconst CHAR='+json.dumps({'cat':cat,'drop':drop})+';\n'+

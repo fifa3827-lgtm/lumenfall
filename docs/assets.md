@@ -79,6 +79,7 @@ glass_N.png는 128색으로 줄여 19KB다. 화면에서는 차이가 보이지 
 ```
 assets/char/
   cat_base.png  cat_curious.png  cat_happy.png  cat_surprised.png  cat_sunny.png   창턱 고양이 (높이 240)
+  cat_sleepy.png  cat_yawn.png  cat_wave.png  cat_love.png                      새 표정(졸기·하품·흔들기·행복, 2×2 판에서 자름)
   drop{R,Y,B}_{base,excited,sleepy,asleep}.png                                     물감 방울 (높이 140)
 ```
 
@@ -217,3 +218,8 @@ python3 tools/art/cut_sheet.py 판.png 출력폴더 이름1,…,이름9 높이 [
 - 장식은 `ART.deco`(assets.js)에 그림이 있으면 그림을, 없으면 `deco.js`의 SVG를 쓴다. 불빛 장식은 은은하게 빛이 숨 쉰다.
 - 마을은 하늘과 땅만 SVG로 그리고, 건물은 불 끈 그림 위에 불 켠 그림을 모은 그림 비율만큼(최대 75%) 겹친다.
   묶음을 다 모으면 불 켠 그림만 그리고 뒤에 빛을 번지게 한다. 하나도 없으면 조금 더 어둡게.
+
+### 고양이 새 표정 (2×2 판)
+
+기본 고양이를 첨부하고 「같은 고양이를 네 가지 새 자세로, 가로 2칸 × 세로 2칸」으로 한 장에 뽑는다(졸기 · 하품 기지개 · 앞발 흔들기 · 행복).
+`GRID=2 python3 tools/art/cut_sheet.py 판.png 폴더 cat_sleepy,cat_yawn,cat_wave,cat_love 400`으로 자르고 높이 240으로 맞춘다.

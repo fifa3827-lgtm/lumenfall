@@ -1,4 +1,4 @@
-"""제미나이 3×3 그림판(진분홍 배경)을 9장으로 잘라 투명 PNG로 만든다.
+"""제미나이 3×3(또는 GRID=2 로 2×2) 그림판(진분홍 배경)을 9장으로 잘라 투명 PNG로 만든다.
    python3 tools/art/cut_sheet.py 판.png 출력폴더 이름1,이름2,...,이름9 [높이]
    - 네 귀퉁이 중앙값을 배경색으로 보고 색 거리로 투명도를 정한다(60~120 사이 부드럽게)
    - 칸(3×3)마다 가장 큰 덩어리와, 그것의 3% 이상인 덩어리(김·연기 등)만 남긴다
@@ -7,6 +7,7 @@
 import sys,os,numpy as np
 from PIL import Image
 from scipy import ndimage
+N=int(os.environ.get('GRID','3'))   # 한 줄 칸 수
 src,out,names=sys.argv[1],sys.argv[2],sys.argv[3].split(',');H=int(sys.argv[4]) if len(sys.argv)>4 else 160
 GLOW=set(sys.argv[5].split(',')) if len(sys.argv)>5 else set()   # 불빛 번짐이 진분홍과 섞인 그림
 im=np.asarray(Image.open(src).convert('RGB')).astype(float);h,w,_=im.shape
@@ -22,11 +23,11 @@ keep=np.zeros(n+1,bool)
 cells={}
 for i,(ar,(cy,cx)) in enumerate(zip(areas,cents),1):
     if ar<40:continue
-    c=(min(2,int(cy/h*3)),min(2,int(cx/w*3)))
+    c=(min(N-1,int(cy/h*N)),min(N-1,int(cx/w*N)))
     cells.setdefault(c,[]).append((ar,i,cy,cx))
 os.makedirs(out,exist_ok=True)
-for r in range(3):
-    for c in range(3):
+for r in range(N):
+    for c in range(N):
         comps=sorted(cells.get((r,c),[]),reverse=True)
         if not comps:print('빈 칸',r,c);continue
         big=comps[0][0];ids=[]
@@ -54,14 +55,14 @@ for r in range(3):
         k2=np.where(pink,0.3,1.0)
         rgb[...,0]=np.where(pink,G+(R-G)*k2,R);rgb[...,2]=np.where(pink,G+(B-G)*k2,B)
         al=np.where(pink&(al<0.95),al*0.35,al)   # 불빛 번짐 가장자리의 분홍은 옅게
-        if names[r*3+c] in GLOW:
+        if names[r*N+c] in GLOW:
             # 불빛 번짐 = 따뜻한 빛과 진분홍 배경의 섞임. 초록 값으로 빛의 양을 되짚어 따뜻한 빛만 남긴다
             R,G,B=rgb[...,0],rgb[...,1],rgb[...,2]
             mix=(R>180)&(B>G+5)&(R>G+60)
             warm=np.array([255,236,168.]);t=np.clip((G-bg[1])/(warm[1]-bg[1]),0,1)
             for ch in range(3):rgb[...,ch]=np.where(mix,warm[ch],rgb[...,ch])
             al=np.where(mix,np.minimum(al,t*0.9),al)
-            if names[r*3+c]=='lamp':
+            if names[r*N+c]=='lamp':
                 # 탁상 등: 갓 아래 연어색 번짐(제미나이가 그린 빛)은 지운다. 갓(위쪽 절반)은 건드리지 않는다
                 yy=np.arange(rgb.shape[0])[:,None]>rgb.shape[0]*0.55
                 glow=yy&(((R>230)&(G<215)&(np.abs(B-G)<30))|(mix)|((al<0.99)&(R>200)&(G>150)))
@@ -70,5 +71,5 @@ for r in range(3):
         img=Image.fromarray(rgba,'RGBA')
         s=H/img.height if img.height>=img.width else H/img.width
         img=img.resize((max(1,round(img.width*s)),max(1,round(img.height*s))),Image.LANCZOS)
-        name=names[r*3+c];img.save(os.path.join(out,name+'.png'),optimize=True)
+        name=names[r*N+c];img.save(os.path.join(out,name+'.png'),optimize=True)
         print(name,img.size,len(ids),'덩어리')

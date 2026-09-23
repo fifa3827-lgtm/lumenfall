@@ -11,7 +11,9 @@ const AUD = {
 /* 캐릭터: 창턱 고양이와 물감 방울 (제미나이 원본을 진분홍 배경에서 잘라냄) */
 const CHAR = {
   cat:{base:'assets/char/cat_base.png', curious:'assets/char/cat_curious.png', happy:'assets/char/cat_happy.png',
-       sunny:'assets/char/cat_sunny.png', surprised:'assets/char/cat_surprised.png'},
+       sunny:'assets/char/cat_sunny.png', surprised:'assets/char/cat_surprised.png',
+       /* 새 표정(제미나이 2×2 판): 없으면 게임이 비슷한 표정으로 대신한다 */
+       sleepy:'assets/char/cat_sleepy.png', yawn:'assets/char/cat_yawn.png', wave:'assets/char/cat_wave.png', love:'assets/char/cat_love.png'},
   drop:{}
 };
 ['R','Y','B'].forEach(c=>{CHAR.drop[c]={};['base','excited','sleepy','asleep'].forEach(e=>CHAR.drop[c][e]=`assets/char/drop${c}_${e}.png`)});
