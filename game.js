@@ -84,6 +84,37 @@ const OPEN=[
  {geo:0,ds:[[1,'R',1],[4,'B',1]],scramble:[[1,2],[2,5]],hintRot:true},
  {geo:0,ds:[[7,'Y',1],['rot',2,4]]}
 ];
+/* ---- 가장 적은 방울 수 ----
+ 색은 비트 OR로만 더해지고 빠지지 않으므로, 쓸 수 있는 방울은 번짐 자리가 전부
+ 목표에서 그 원색을 가진 조각 안에 들어가는 것뿐이다. 그래서 원색마다 따로
+ 「그 원색 조각들을 정확히 덮는 가장 적은 방울 수」를 찾아 더하면 된다. */
+function minDrops(g,its){
+ let total=0;
+ for(const c of PRIMS){
+  const b=BIT[c],S=new Set();g.forEach((v,i)=>{if(v&b)S.add(i)});
+  if(!S.size)continue;
+  const cnt={};its.forEach(it=>{if(it.c===c)cnt[it.r]=(cnt[it.r]||0)+it.n});
+  const cand=[],seen=new Set();
+  Object.keys(cnt).forEach(r=>{r=+r;for(let at=0;at<REG.length;at++){
+   const fp=spread(at,r);if(!fp.every(i=>S.has(i)))continue;
+   const key=r+':'+fp.slice().sort((a,b)=>a-b).join(',');if(seen.has(key))continue;seen.add(key);
+   cand.push({r,fp})}});
+  const max=Object.values(cnt).reduce((a,b)=>a+b,0);
+  const cov=new Map();
+  const dfs=d=>{
+   let need=-1;for(const i of S)if(!cov.get(i)){need=i;break}
+   if(need<0)return true;if(d===0)return false;
+   for(const k of cand){if(!cnt[k.r]||!k.fp.includes(need))continue;
+    cnt[k.r]--;k.fp.forEach(i=>cov.set(i,(cov.get(i)||0)+1));
+    const ok=dfs(d-1);
+    k.fp.forEach(i=>cov.set(i,cov.get(i)-1));cnt[k.r]++;
+    if(ok)return true}
+   return false};
+  let best=max;for(let d=1;d<=max;d++)if(dfs(d)){best=d;break}
+  total+=best;
+ }
+ return total;
+}
 function genLevel(L){
  if(L<OPEN.length){
   const o=OPEN[L];useGeo(o.geo);
@@ -91,10 +122,13 @@ function genLevel(L){
   let start=null;
   if(o.scramble){start=g.slice();o.scramble.forEach(([ring,st])=>start=rotateRing(start,ring,st))}
   const items=o.scramble?[]:itemsOf(o.ds);
-  return {goal:g,items,start,score:0,name:GNAME,rotate:!!RINGS&&L>=8,hintRot:!!o.hintRot};
+  const rotate=!!RINGS&&L>=8;
+  const par=o.scramble?o.scramble.length:rotate?o.ds.length:minDrops(g,items);
+  return {goal:g,items,start,score:0,name:GNAME,rotate,hintRot:!!o.hintRot,geo:o.geo,par};
  }
  const i=L-OPEN.length;
- useGeo(Math.floor(i/2)%GEOS.length);buildSym();
+ const gi=Math.floor(i/2)%GEOS.length;
+ useGeo(gi);buildSym();
  const drops=Math.min(6,2+Math.floor(i/4));
  let best=null,bs=-1;
  for(let t=0;t<500;t++){
@@ -117,11 +151,14 @@ function genLevel(L){
   if(bs>=80)break;
  }
  if(!best){const ds=[[0,'B',3],[0,'R',2]];best={ds,g:runSeq(ds)}}
- return {goal:best.g,items:itemsOf(best.ds),score:Math.round(bs),name:GNAME,rotate:!!RINGS};
+ const its=itemsOf(best.ds);
+ /* 고리 판은 돌리기까지 포함한 수로 센다. 생성한 순서의 길이가 기준이다. */
+ const par=RINGS?best.ds.length:minDrops(best.g,its);
+ return {goal:best.g,items:its,score:Math.round(bs),name:GNAME,rotate:!!RINGS,geo:gi,par};
 }
 
 /* ---- 상태 ---- */
-let li=0,CUR=null,goal=[],cells=[],items=[],sel=0,hist=[],done=false;
+let li=0,CUR=null,goal=[],cells=[],items=[],sel=0,hist=[],done=false,undone=false;
 let lit=0,litT=0,motes=[],anim=null,origins=[];
 const bc=document.getElementById('board'),bx=bc.getContext('2d');
 const gc=document.getElementById('goal'),gx=gc.getContext('2d');
@@ -510,15 +547,16 @@ function check(){
  done=true;
  motes=[...Array(30)].map(()=>{const a=Math.random()*Math.PI*2,d=Math.random()*RR*.9;
   return {x:CX+Math.cos(a)*d,y:CY+Math.sin(a)*d,r:1.8+Math.random()*4,a:.25+Math.random()*.5,p:Math.random()*6,vy:-(.1+Math.random()*.28)}});
- document.body.classList.add('lit');sWin();saveWon(li);updGal();fxWin();
- $('msg').innerHTML='빛이 들어옵니다';
+ const moves=hist.length,st=1+(undone?0:1)+(moves<=CUR.par?1:0);
+ document.body.classList.add('lit');sWin();saveWon(li,st);updGal();fxWin();
+ showStars(st,moves);
  litT=performance.now();
  (function b(){lit=Math.min(1,(performance.now()-litT)/1700);
   motes.forEach(m=>{m.y+=m.vy;if(m.y<CY-RR)m.y=CY+RR});render();
   if(lit<1)requestAnimationFrame(b);else{$('nextBtn').classList.add('show');
    (function l(){if(!done)return;motes.forEach(m=>{m.y+=m.vy;if(m.y<CY-RR)m.y=CY+RR});render();requestAnimationFrame(l)})()}})()}
 $('undoBtn').addEventListener('click',()=>{if(!hist.length||done)return;
- const h=hist.pop();cells=h.cells;items=h.items;sel=h.sel;origins=h.origins||[];sUndo();$('msg').textContent='';render()});
+ undone=true;const h=hist.pop();cells=h.cells;items=h.items;sel=h.sel;origins=h.origins||[];sUndo();$('msg').textContent='';render()});
 $('galBtn').addEventListener('click',()=>{buildGallery();$('sheet').classList.add('open');
  $('sheet').setAttribute('aria-hidden','false');sPick()});
 $('closeGal').addEventListener('click',()=>{$('sheet').classList.remove('open');
@@ -537,9 +575,21 @@ $('paints').addEventListener('click',e=>{const b=e.target.closest('.p');if(!b||b
  sel=+b.dataset.k;sPick();renderPaints();$('msg').textContent=''});
 /* ---------- 창고 ---------- */
 let SAVED=[];
-function loadSaved(){try{const v=localStorage.getItem('lumenfall:won');SAVED=v?JSON.parse(v):[]}catch(e){SAVED=[]}}
-function saveWon(k){if(SAVED.includes(k))return;SAVED.push(k);SAVED.sort((a,b)=>a-b);
+let STARS={};
+function loadSaved(){try{const v=localStorage.getItem('lumenfall:won');SAVED=v?JSON.parse(v):[]}catch(e){SAVED=[]}
+ try{STARS=JSON.parse(localStorage.getItem('lumenfall:stars')||'{}')||{}}catch(e){STARS={}}}
+function saveWon(k,st){
+ if(st&&(STARS[k]||0)<st){STARS[k]=st;try{localStorage.setItem('lumenfall:stars',JSON.stringify(STARS))}catch(e){}}
+ if(SAVED.includes(k))return;SAVED.push(k);SAVED.sort((a,b)=>a-b);
  try{localStorage.setItem('lumenfall:won',JSON.stringify(SAVED))}catch(e){}}
+const starStr=n=>'★'.repeat(n)+'☆'.repeat(3-n);
+function parText(){return CUR.rotate?`${CUR.par}번 만에`:`방울 ${CUR.par}개로`}
+function showStars(st,moves){
+ const ok1=!undone,ok2=moves<=CUR.par;
+ $('msg').innerHTML=`<div class="stars">${[0,1,2].map(k=>`<span class="st" style="animation-delay:${.9+k*.28}s">${k<st?'★':'☆'}</span>`).join('')}</div>`+
+  `<small><span class="${ok2?'ok':'no'}">${parText()}</span> · <span class="${ok1?'ok':'no'}">되돌리기 없이</span></small>`;
+ for(let k=0;k<st;k++)setTimeout(()=>{tone(880*Math.pow(1.26,k),.35,'sine',.07);buzz(14)},900+k*280);
+}
 function updGal(){$('galN').textContent=SAVED.length;
  $('sheetCount').textContent=SAVED.length?SAVED.length+'개':'';
  $('galEmpty').classList.toggle('hide',SAVED.length>0)}
@@ -551,7 +601,7 @@ function buildGallery(){
   const d=document.createElement('div');d.className='gitem';
   const cv=document.createElement('canvas');cv.width=cv.height=220;
   d.appendChild(cv);
-  const lab=document.createElement('span');lab.textContent=lv.name+' '+(k+1);
+  const lab=document.createElement('span');lab.textContent=lv.name+' '+(k+1)+' '+starStr(STARS[k]||1);
   d.appendChild(lab);wrap.appendChild(d);
   const c=cv.getContext('2d');
   c.fillStyle='#0F0B07';c.fillRect(0,0,220,220);
@@ -559,11 +609,12 @@ function buildGallery(){
   drawAll(c,110,110,220*.45,lv.goal,null,true,'#181209');
   lit=sl;
  });
- REG=sREG;ADJ=sADJ;GNAME=sGN;
+ /* 고리 정보까지 지금 판으로 되돌린다. 조각 순서는 같게 만들어진다. */
+ if(CUR){useGeo(CUR.geo);buildSym()}else{REG=sREG;ADJ=sADJ;GNAME=sGN}
  updGal();
 }
 function load(k){
- li=k;done=false;hist=[];anim=null;lit=0;motes=[];origins=[];
+ li=k;done=false;undone=false;hist=[];anim=null;lit=0;motes=[];origins=[];
  document.body.classList.remove('lit');
  CUR=genLevel(k);goal=CUR.goal;items=CUR.items.map(o=>({...o}));
  cells=CUR.start?CUR.start.slice():new Array(REG.length).fill(0);sel=0;rotatedOnce=false;drag=null;WIG=null;idleT=performance.now();
@@ -572,6 +623,8 @@ function load(k){
  const tm=TIMES[Math.floor(k/4)%4];document.body.dataset.time=tm;
  $('sub').innerHTML=CUR.name+' · '+(k+1)+'<span class="timechip">'+TNAME[tm]+'</span>';
  $('nextBtn').classList.remove('show');$('msg').textContent='';
+ const best=STARS[k]||0;
+ $('par').innerHTML=`<b>★★★</b> ${parText()} · 되돌리기 없이`+(best?`<span class="best">${starStr(best)}</span>`:'');
  render()}
 loadSaved();updGal();initMusic();
 try{if(localStorage.getItem('lumenfall:sound')==='0'){sound=false;musicOn=false;$('soundBtn').textContent='소리 끔'}}catch(e){}
