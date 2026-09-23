@@ -24,9 +24,9 @@ header{width:100%;display:flex;justify-content:space-between;align-items:flex-st
 .hb{display:flex;gap:12px;flex:0 0 auto}.hb button{white-space:nowrap;padding:2px 0;font-size:13px;color:#E6D5B8;text-shadow:0 1px 2px #0007}
 .goalrow{display:flex;align-items:center;gap:14px;align-self:flex-start;width:100%}
 #goal{flex:0 0 auto;opacity:.95;cursor:zoom-in}
-/* 고양이는 목표 줄 오른쪽 끝에 크게 앉아, 발끝이 창 위쪽 여백에 살짝 걸친다. 누름은 아래로 통과시킨다. */
-.goalrow{position:relative;padding-right:112px}
-.cat{position:absolute;right:-6px;bottom:-40px;height:140px;width:auto;z-index:5;pointer-events:none;
+/* 고양이는 창 아래 창턱 오른쪽 끝에 앉는다. 공중에 떠 보이지 않게. 누름은 아래로 통과시킨다. */
+.goalrow{position:relative}
+.cat{position:absolute;right:0;bottom:2px;height:112px;width:auto;z-index:5;pointer-events:none;
  filter:drop-shadow(0 6px 10px #0007);transform-origin:50% 100%}
 .cat.hop{animation:cathop .6s cubic-bezier(.3,1.6,.5,1)}
 @keyframes cathop{0%{transform:translateY(0) scale(1)}35%{transform:translateY(-10px) scale(1.04,.97)}100%{transform:translateY(0) scale(1)}}
@@ -116,12 +116,11 @@ body.lit[data-time="night"]{background:radial-gradient(120% 90% at 50% 6%,#2A396
 @keyframes boardpop{0%{transform:scale(1)}35%{transform:scale(1.045)}65%{transform:scale(.99)}100%{transform:scale(1)}}
 .boardwrap.pop{animation:boardpop .7s cubic-bezier(.3,1.4,.5,1)}
 /* 창턱: 창 바로 아래 나무 턱. 별로 얻은 장식을 올려 둔다(누름은 통과) */
-.sill{position:relative;width:min(96vw,410px);height:0;margin-top:-8px;display:flex;justify-content:space-between;align-items:flex-end;
+.sill{position:relative;width:min(96vw,410px);height:50px;margin-top:-14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:flex-end;
  padding:0 8px;pointer-events:none;z-index:2}
-.sill.has{height:50px;margin-top:-14px;margin-bottom:14px}
 /* 고른 방울이 위로 떠도 창턱 위로 올라오게 */
 .paints{position:relative;z-index:3}
-.sill.has::after{content:"";position:absolute;left:0;right:0;bottom:-6px;height:9px;border-radius:2px;
+.sill::after{content:"";position:absolute;left:0;right:0;bottom:-6px;height:9px;border-radius:2px;
  background:linear-gradient(180deg,#8A6440,#5A3E26);box-shadow:0 4px 8px #0008,inset 0 1px 0 #B08658;z-index:-1}
 .sill .side{display:flex;gap:4px;align-items:flex-end}
 .sill svg{width:46px;height:46px;display:block;filter:drop-shadow(0 2px 2px #0007)}
@@ -204,10 +203,9 @@ body.lit[data-time="night"]{background:radial-gradient(120% 90% at 50% 6%,#2A396
   <div class="goalrow">
     <canvas id="goal" width="260" height="260" style="width:96px;height:96px"></canvas>
     <div class="goallab">이 창이 되도록<br>물감을 떨어뜨리세요<span class="par" id="par"></span><span class="peekhint">그림을 누르면 크게 보여요</span></div>
-    <img class="cat" id="cat" alt="" src="">
   </div>
   <div class="boardwrap"><canvas id="board" width="1000" height="1000"></canvas></div>
-  <div class="sill" id="sill"></div>
+  <div class="sill"><div class="side" id="sill"></div><img class="cat" id="cat" alt="" src=""></div>
   <div class="paints" id="paints"></div>
   <div class="tools"><button id="undoBtn">되돌리기</button></div>
   <div class="msg" id="msg"></div>
