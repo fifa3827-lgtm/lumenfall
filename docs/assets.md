@@ -14,6 +14,7 @@ assets/
   win.mp3                                    완성 음악
   drop.mp3                                   물방울
   mix.mp3                                    크리스털 (색이 섞일 때)
+  char/                                      고양이 5장, 물감 방울 12장 (아래 「캐릭터」)
 ```
 
 ## 유리
@@ -71,59 +72,73 @@ glass_N.png는 128색으로 줄여 19KB다. 화면에서는 차이가 보이지 
 | 황동 보강대 | 벽 표시로 썼는데 너무 두꺼웠다. 얇은 빛나는 선으로 바꿨다가, 조각 모양이 바뀌면서 벽 자체가 없어졌다 |
 | 빛줄기 | 사각형 창에서만 어울렸다 |
 
-## 캐릭터 (준비 중)
+## 캐릭터
 
-배경을 **진분홍 #FF00FF**로 둔다. 고양이가 크림색이라 검정이나 흰 배경이면 몸까지 지워진다.
+```
+assets/char/
+  cat_base.png  cat_curious.png  cat_happy.png  cat_surprised.png  cat_sunny.png   창턱 고양이 (높이 240)
+  drop{R,Y,B}_{base,excited,sleepy,asleep}.png                                     물감 방울 (높이 140)
+```
 
-### 고양이 기본
+원본은 진분홍(#FF00FF) 배경으로 뽑는다. 고양이가 크림색이라 검정이나 흰 배경이면 몸까지 지워진다.
+
+### 배경 지우기
+
+1. 네 귀퉁이의 중앙값을 배경색으로 잡고, 배경색과의 거리로 투명도를 정한다(거리 60~120 사이를 부드럽게).
+2. 가장 큰 덩어리 하나만 남기고 구멍을 메운다. 오른쪽 아래 제미나이 워터마크는 여기서 떨어져 나간다.
+   신남 방울 머리 위 반짝이 선도 함께 떨어져 나가서 지금은 없다.
+3. 반투명 가장자리에서 배경색을 빼 분홍 테두리를 없앤다.
+4. 여백을 잘라 내고 높이를 맞춘다.
+
+### 노랑·파랑 방울
+
+빨강 방울 네 장에서 색상만 돌린다. 볼 홍조는 몸보다 분홍 쪽(색상 0.93~0.99)이라 얼굴 부분에서 그 색만 골라 남기고,
+나머지 빨간 기운(몸·테두리·반사광)은 노랑(색상 0.125, 조금 밝게)이나 파랑(0.59, 조금 어둡게)으로 바꾼다.
+
+### 프롬프트
+
+고양이 기본 (첨부 없이):
 
 ```
 A cute chubby cream-colored cat with soft orange tabby stripes, sitting upright and facing the viewer
 in a gentle three-quarter view, looking slightly upward with big round shiny eyes and a tiny smile.
 Rosy pink cheeks, small pink nose, fluffy tail curled around its front paws. Style: soft cozy
 storybook illustration, clean smooth shapes, gentle warm lighting, thin darker outline, like a sticker
-for a casual mobile game. Full body visible, centered, nothing cut off. Solid flat magenta background
-(#FF00FF), completely uniform. No text, no shadow on the ground, no props, no watermark.
+for a casual mobile game. Square 1:1. Full body visible, centered, nothing cut off. Solid flat magenta
+background (#FF00FF), completely uniform. No text, no shadow on the ground, no props, no watermark.
 ```
 
-### 고양이 동작 (기본 이미지를 첨부하고)
+고양이 동작 (기본 이미지를 첨부하고, 빈칸만 바꿔 한 장씩):
 
 ```
-Same cat, same art style, same colors, same size and framing, same magenta background.
-Only the pose and expression change: ___
+Keep the same cat character from the attached image: same art style, same fur colors and stripe pattern,
+same line thickness, same solid flat magenta background (#FF00FF), square 1:1, similar size in the frame.
+Redraw it in a NEW pose that is clearly different from the reference: ___
+Whole body and whole tail inside the frame. No text, no shadow on the ground, no props, no watermark.
 ```
+
+"같은 그림" "같은 크기·위치"를 너무 세게 적으면 제미나이가 거의 복사만 한다. 「NEW pose, clearly different」를 넣어야 바뀐다.
 
 | 동작 | 빈칸 |
 |---|---|
-| 궁금 | ears perked up high, head tilted to one side, eyes wide and curious |
-| 기쁨 | eyes closed in happy crescent shapes, big smile, tail raised high and curved at the tip |
-| 놀람 | eyes very round and wide, tiny open mouth, ears slightly back, fur a little puffed |
-| 햇볕 | eyes gently closed, blissful face, cheeks extra rosy, head tilted back as if basking in warm sunlight |
+| 궁금 | the cat tilts its head strongly to the LEFT, ears perked straight up, eyes very wide, mouth in a tiny "o", and it lifts ONE front paw up near its chest |
+| 기쁨 | eyes closed in happy crescent shapes, a big wide open smile, tail raised high straight up with a curl at the tip |
+| 놀람 | leans back in surprise, eyes very round and wide, tiny open mouth, ears pulled back, fur and tail puffed up |
+| 햇볕 | head tilted back, eyes gently closed, blissful smile, extra rosy cheeks, basking in warm sunlight, tail lying loosely |
 
-### 물감 방울 기본
-
-빨강 하나만 뽑는다. 노랑과 파랑은 유리와 같은 방법으로 색을 바꾼다.
+물감 방울 기본 (첨부 없이, 빨강 하나만):
 
 ```
-A cute round water-drop character made of glossy red paint (#E24B4A), shaped like a plump teardrop
-with a pointed top. A soft white highlight on the upper left. Simple cute face in the lower middle:
-two small black dot eyes with a tiny white shine, a small happy smile, soft pink blush on both cheeks.
-Style: soft cozy casual mobile game sticker, smooth clean shapes, thin darker red outline. Centered,
-full body. Solid flat magenta background (#FF00FF). No text, no shadow, no arms or legs, no watermark.
+A cute round water-drop character made of glossy red paint (#E24B4A), shaped like a plump teardrop with a soft pointed top.
+A soft white highlight on the upper left. Simple cute face in the lower middle: two small black dot eyes with a tiny white shine,
+a small happy smile, soft pink blush on both cheeks. Style: soft cozy storybook sticker for a casual mobile game, smooth clean shapes,
+thin darker red outline. Square 1:1, centered, about 60% of the frame height. Solid flat magenta background (#FF00FF).
+No text, no shadow, no arms or legs, no watermark.
 ```
 
-### 물감 방울 표정 (기본 이미지를 첨부하고)
-
-```
-Same paint drop character, same shape, color, size, framing and magenta background.
-Only the face changes: ___
-```
-
-| 표정 | 빈칸 |
-|---|---|
-| 신남 | eyes squeezed into happy arcs, wide open smiling mouth, three tiny sparkle lines above its head |
-| 졸림 | half-closed sleepy eyes shown as short flat lines, small calm mouth |
-| 잠듦 | eyes fully closed as gentle curves, tiny round mouth, a small "z" floating near the top |
+물감 방울 표정 (기본 이미지를 첨부하고): 「Keep the same paint drop character … Change ONLY the face: ___」.
+신남 = eyes squeezed into happy arcs, wide open smiling mouth / 졸림 = half-closed sleepy eyes as short flat lines /
+잠듦 = eyes fully closed as gentle curves, tiny round mouth. 「z」 글자는 엉뚱하게 나와서 뺐다.
 
 ## 고르는 기준
 

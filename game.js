@@ -7,8 +7,17 @@ const PRIMS=['R','Y','B'];
 const IMG={};let ready=0,need=0;
 for(const k in TEX){need++;const im=new Image();im.onload=()=>{if(++ready>=need)render()};im.src=TEX[k];IMG[k]=im}
 
-let REG=[],ADJ=[],GNAME='',RINGS=null,RINGIDX=[];
+let REG=[],ADJ=[],GNAME='',RINGS=null,RINGIDX=[],OUTLINES=null,LOCK=[];
+/* 그림 창: 조각과 이웃을 미리 계산해 둔 자료를 그대로 쓴다. 부분이 다르면 이웃이 아니다. */
+function usePic(pi,fine){
+ const P=PICS[pi],S=fine?P.fine:P.base;
+ REG=S.regs.map(r=>({pts:r.pts,cx:r.cx,cy:r.cy,part:r.part}));ADJ=S.adj;GNAME=P.name;
+ RINGS=null;RINGIDX=[];RRAD=[];OUTLINES=P.outlines;
+ LOCK=REG.map(()=>0);
+}
 function useGeo(gi){
+ if(typeof gi==='object'&&gi){usePic(gi.pic,gi.fine);return}
+ OUTLINES=null;LOCK=[];
  const g=normalize(GEOS[gi%GEOS.length]());
  REG=g.regs;ADJ=buildAdj(REG);GNAME=g.name;RINGS=g.rings||null;
  RINGIDX=[];RRAD=[];
@@ -91,7 +100,7 @@ const OPEN=[
 function minDrops(g,its){
  let total=0;
  for(const c of PRIMS){
-  const b=BIT[c],S=new Set();g.forEach((v,i)=>{if(v&b)S.add(i)});
+  const b=BIT[c],S=new Set();g.forEach((v,i)=>{if((v&b)&&!LOCK[i])S.add(i)});
   if(!S.size)continue;
   const cnt={};its.forEach(it=>{if(it.c===c)cnt[it.r]=(cnt[it.r]||0)+it.n});
   const cand=[],seen=new Set();
@@ -115,7 +124,63 @@ function minDrops(g,its){
  }
  return total;
 }
+/* 그림 창 판 만들기: 부분마다 아직 허용된 색이 아닌 조각을 골라, 그 색에 모자란 원색 방울을
+ 떨어뜨리기를 반복한다. 허용된 색으로 빈틈없이 채워지면 한 벌이 된다. 여러 벌 중
+ 방울이 적고 주인공 색 비율이 알맞은 것을 고른다. 같은 단계는 같은 판. */
+/* 색 이름별로 허용하는 색과 주인공 색. 값은 원색 비트(빨1 노2 파4)의 합이다. */
+const PAL={red:{want:1,allow:[1,3],ratio:.65,max:3},orange:{want:3,allow:[3,2,1],ratio:.65,max:3},
+ yellow:{want:2,allow:[2,3,6],ratio:.65,max:3},green:{want:6,allow:[6,2],ratio:.75,max:4},
+ blue:{want:4,allow:[4,6,5],ratio:.65,max:3},purple:{want:5,allow:[5,4,1],ratio:.6,max:4}};
+/* 난이도: 단계가 오를수록
+ - 칠할 부분이 늘고(1·2단계 한 곳 → 3~6단계 두 곳 → 7~16단계 세 곳 → 그다음 네 곳)
+ - 두 바퀴째(25단계)부터는 같은 그림이 조각이 더 잘게 나뉘어 나오고
+ - 9단계부터 필요 없는 방울이 하나(21단계부터 둘) 섞여 「덜 쓰기」 별이 어려워지고
+ - 한 부분에 쓰는 방울 수와 섞인 색의 가짓수가 늘어난다. */
+function genPic(L,pi){
+ const N=PICS.length,v=Math.floor(L/N),fine=v>=2||(v>=1&&L%2===1);
+ usePic(pi,fine);const P=PICS[pi];
+ /* 같은 도안이 다시 나오면(회차) 다른 색 조합을 쓴다 */
+ const recipes=P.pals.map(ps=>PAL[ps[v%ps.length]]);
+ const parts=recipes.map((rc,k)=>k);
+ const nAct=Math.min(parts.length,L<2?1:L<6?2:L<16?3:4);
+ const pr=mul(L*131+7),order=parts.slice().sort(()=>pr()-.5),act=new Set(order.slice(0,nAct));
+ const extra=L>=16?1:0, perDrop=Math.max(8,25-L), mixBonus=Math.min(30,12+L);
+ let ds=[];const pre=[];
+ recipes.forEach((rc,part)=>{
+  const idx=REG.map((r,i)=>r.part===part?i:-1).filter(i=>i>=0);
+  let best=null,bs=-1e9;
+  for(let t=0;t<800;t++){
+   const rand=mul(L*7919+part*3301+t*104729+11);
+   let g=new Array(REG.length).fill(0);const seq=[];
+   for(let k=0;k<rc.max+extra;k++){
+    const bad=idx.filter(i=>!rc.allow.includes(g[i]));if(!bad.length)break;
+    const i=bad[Math.floor(rand()*bad.length)];
+    const goals=rc.allow.filter(a=>(a&g[i])===g[i]&&a!==g[i]);if(!goals.length)break;
+    const gl=goals[Math.floor(rand()*goals.length)],miss=PRIMS.filter(c=>(gl&BIT[c])&&!(g[i]&BIT[c]));
+    const c=miss[Math.floor(rand()*miss.length)],r=1+Math.floor(rand()*2);
+    const at=spread(i,r).filter(j=>REG[j].part===part);
+    const d=[at[Math.floor(rand()*at.length)],c,r];seq.push(d);g=applyDrop(g,d[0],d[1],d[2]);
+   }
+   if(idx.some(i=>!rc.allow.includes(g[i])))continue;
+   const f=idx.filter(i=>g[i]===rc.want).length/idx.length;
+   const kinds=new Set(idx.map(i=>g[i])).size;
+   const sc=-Math.abs(f-rc.ratio)*60+(kinds>1?mixBonus:0)+(kinds>2?mixBonus/2:0)-seq.length*perDrop;
+   if(sc>bs){bs=sc;best=seq}
+  }
+  if(!best)best=[[idx[0],PRIMS.find(c=>rc.want&BIT[c]),2]];
+  if(act.has(part))ds=ds.concat(best);else pre.push(...best);
+ });
+ const pg=runSeq(pre);pg.forEach((v,i)=>{if(v)LOCK[i]=v});
+ const start=LOCK.slice();
+ const g=runSeq(ds).map((v,i)=>v|start[i]);
+ /* 필요 없는 방울: 이미 쓰는 방울과 같은 모양으로 섞어 두어 눈에 띄지 않게 한다 */
+ const items=itemsOf(ds),decoys=L>=20?2:L>=8?1:0,dr=mul(L*977+3);
+ for(let k=0;k<decoys&&items.length;k++){const it=items[Math.floor(dr()*items.length)];it.n++}
+ return {goal:g,items,start,score:0,name:GNAME,rotate:false,geo:{pic:pi,fine},par:minDrops(g,items),pic:true,ds,lock:LOCK.slice()};
+}
 function genLevel(L){
+ /* 모든 판이 그림 창이다. 도안을 차례로 돌린다. */
+ return genPic(L,L%PICS.length);
  if(L<OPEN.length){
   const o=OPEN[L];useGeo(o.geo);
   const g=runSeq(o.ds);
@@ -329,6 +394,7 @@ function fxDrop(i,col){
  fxPump();
 }
 function fxName(i,v){
+ if(v===7)cat('surprised',true,2400);
  const c=regCenter(i),k=KEYS[v];
  FX.push({type:'text',x:c.x,y:c.y-RR*.04,text:MIXNAME[v]||'',c:v===7?'#C9B8A4':(LIGHT[k]||'#fff'),life:0,max:1.1});
  fxPump();
@@ -375,9 +441,19 @@ function leadNet(ctx,cx,cy,rr,glow,pass){
  ctx.save();ctx.lineJoin='round';ctx.lineCap='round';
  if(pass==='under'){
   ctx.strokeStyle=glow>0?mixHex('#2E241C','#070504',glow):'#2E241C';
-  ctx.lineWidth=rr*.072;
+  ctx.lineWidth=rr*(OUTLINES?.05:.072);
   REG.forEach(r=>withRot(ctx,r,cx,cy,()=>{path(ctx,r,cx,cy,rr,0);ctx.stroke()}));
+  if(OUTLINES){ctx.lineWidth=rr*.12;OUTLINES.forEach(o=>{ctx.beginPath();
+   o.forEach((p,k)=>{const x=cx+p[0]*rr,y=cy+p[1]*rr;k?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.closePath();ctx.stroke()})}
  }else{
+  if(OUTLINES){
+   /* 굵은 납선: 번짐이 넘지 못하는 경계 */
+   ctx.strokeStyle=glow>0?mixHex('#3A2E24','#0A0705',glow):'#3A2E24';ctx.lineWidth=rr*.05;
+   OUTLINES.forEach(o=>{ctx.beginPath();o.forEach((p,k)=>{const x=cx+p[0]*rr,y=cy+p[1]*rr;k?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.closePath();ctx.stroke()});
+   ctx.save();ctx.globalAlpha=.42-glow*.2;ctx.strokeStyle='#B8A487';ctx.lineWidth=rr*.009;ctx.translate(-rr*.008,-rr*.009);
+   OUTLINES.forEach(o=>{ctx.beginPath();o.forEach((p,k)=>{const x=cx+p[0]*rr,y=cy+p[1]*rr;k?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.closePath();ctx.stroke()});
+   ctx.restore();
+  }
   ctx.strokeStyle=glow>0?mixHex('#382C23','#0A0705',glow):'#382C23';
   ctx.lineWidth=rr*.021;
   REG.forEach(r=>withRot(ctx,r,cx,cy,()=>{path(ctx,r,cx,cy,rr,0);ctx.stroke()}));
@@ -394,7 +470,8 @@ function drawAll(ctx,cx,cy,rr,g,alphaMap,useGlow,bgFill){
  if(bgFill){ctx.save();
   REG.forEach(r=>withRot(ctx,r,cx,cy,()=>{path(ctx,r,cx,cy,rr,0);ctx.fillStyle=bgFill;ctx.fill()}));ctx.restore()}
  for(let i=0;i<REG.length;i++){const v=K(g[i]);if(!v)continue;
-  const a=alphaMap?(alphaMap[i]!==undefined?alphaMap[i]:1):1;if(a<=0)continue;
+  let a=alphaMap?(alphaMap[i]!==undefined?alphaMap[i]:1):1;if(a<=0)continue;
+  if(LOCK[i]&&!useGlow)a*=.55;else if(LOCK[i])a*=.55+.45*glow;
   withRot(ctx,REG[i],cx,cy,()=>drawRegion(ctx,i,cx,cy,rr,v,a,useGlow?glowOf(i):0))}
  leadNet(ctx,cx,cy,rr,glow,'over');
 }
@@ -473,17 +550,26 @@ function idleCheck(){
 }
 setInterval(idleCheck,1000);
 function renderPaints(){let h='';
+ const idle=performance.now()-idleT>12000;
  items.forEach((it,k)=>{
-  const sz=it.r===1?40:it.r===2?50:58;
+  const w=it.r===1?44:it.r===2?54:62;
   const lab=it.r===1?'옆까지':it.r===2?'두 칸':'세 칸';
-  h+=`<div class="pw"><button class="p${sel===k?' on':''}" data-k="${k}" ${it.n<=0?'disabled':''}
-   style="width:${sz}px;height:${sz}px;background:radial-gradient(circle at 34% 30%, #ffffff70 0 15%, ${COL[it.c]} 46%, ${DEEP[it.c]} 100%)">
+  /* 방울 표정: 고른 방울은 신남, 다 쓴 방울은 잠듦, 한동안 손대지 않으면 졸림 */
+  const face=it.n<=0?'asleep':sel===k?'excited':idle?'sleepy':'base';
+  h+=`<div class="pw"><button class="p${sel===k?' on':''}" data-k="${k}" ${it.n<=0?'disabled':''} aria-label="${lab} 물감"
+   style="width:${w}px;height:${Math.round(w*1.18)}px;background-image:url(${CHAR.drop[it.c][face]})">
    <span class="cnt">${it.n}</span></button><span class="rng">${lab}</span></div>`});
  $('paints').innerHTML=h}
 let drag=null,rotatedOnce=false,hintLoop=false;
+/* 창턱 고양이: 판이 열리면 궁금, 조금 뒤 기본, 탁해지면 궁금, 완성하면 기쁨 */
+let catT=0,lastPaint='';
+function cat(face,hop,back){const el=$('cat');if(!el)return;el.src=CHAR.cat[face];
+ if(hop){el.classList.remove('hop');void el.offsetWidth;el.classList.add('hop')}
+ clearTimeout(catT);if(back)catT=setTimeout(()=>{if(!done)el.src=CHAR.cat.base},back)}
+setInterval(()=>{if(!done&&CUR){const k=performance.now()-idleT>12000;if(k!==lastPaint){lastPaint=k;renderPaints()}}},1000);
 function local(e){const rc=bc.getBoundingClientRect();
  return {x:((e.clientX-rc.left)/rc.width*W-CX)/RR, y:((e.clientY-rc.top)/rc.height*W-CY)/RR}}
-function regionAt(p){for(let i=0;i<REG.length;i++)if(inside(REG[i],p.x,p.y))return i;return -1}
+function regionAt(p){for(let i=REG.length-1;i>=0;i--)if(inside(REG[i],p.x,p.y))return i;return -1}
 function angDiff(a,b){let d=a-b;while(d>Math.PI)d-=Math.PI*2;while(d<-Math.PI)d+=Math.PI*2;return d}
 bc.addEventListener('pointerdown',e=>{
  if(done)return;
@@ -515,6 +601,7 @@ function endDrag(e){
   render();check();return;
  }
  if(dr.i<0)return;
+ if(LOCK[dr.i]){$('msg').innerHTML='<small>이 유리는 이미 끼워져 있어요</small>';return}
  if(!items.length)return;
  const it=items[sel];
  if(!it||it.n<=0){$('msg').innerHTML='<small>아래에서 물감을 골라주세요</small>';return}
@@ -548,7 +635,7 @@ function check(){
  motes=[...Array(30)].map(()=>{const a=Math.random()*Math.PI*2,d=Math.random()*RR*.9;
   return {x:CX+Math.cos(a)*d,y:CY+Math.sin(a)*d,r:1.8+Math.random()*4,a:.25+Math.random()*.5,p:Math.random()*6,vy:-(.1+Math.random()*.28)}});
  const moves=hist.length,st=1+(undone?0:1)+(moves<=CUR.par?1:0);
- document.body.classList.add('lit');sWin();saveWon(li,st);updGal();fxWin();
+ document.body.classList.add('lit');sWin();saveWon(li,st);updGal();fxWin();cat(st===3?'sunny':'happy',true);
  showStars(st,moves);
  litT=performance.now();
  (function b(){lit=Math.min(1,(performance.now()-litT)/1700);
@@ -572,16 +659,16 @@ $('soundBtn').addEventListener('click',()=>{
  try{localStorage.setItem('lumenfall:sound',sound?'1':'0')}catch(e){}
 });
 $('paints').addEventListener('click',e=>{const b=e.target.closest('.p');if(!b||b.disabled)return;
- sel=+b.dataset.k;sPick();renderPaints();$('msg').textContent=''});
+ sel=+b.dataset.k;idleT=performance.now();sPick();renderPaints();$('msg').textContent=''});
 /* ---------- 창고 ---------- */
 let SAVED=[];
 let STARS={};
-function loadSaved(){try{const v=localStorage.getItem('lumenfall:won');SAVED=v?JSON.parse(v):[]}catch(e){SAVED=[]}
- try{STARS=JSON.parse(localStorage.getItem('lumenfall:stars')||'{}')||{}}catch(e){STARS={}}}
+function loadSaved(){try{const v=localStorage.getItem('lumenfall:pic-won');SAVED=v?JSON.parse(v):[]}catch(e){SAVED=[]}
+ try{STARS=JSON.parse(localStorage.getItem('lumenfall:pic-stars')||'{}')||{}}catch(e){STARS={}}}
 function saveWon(k,st){
- if(st&&(STARS[k]||0)<st){STARS[k]=st;try{localStorage.setItem('lumenfall:stars',JSON.stringify(STARS))}catch(e){}}
+ if(st&&(STARS[k]||0)<st){STARS[k]=st;try{localStorage.setItem('lumenfall:pic-stars',JSON.stringify(STARS))}catch(e){}}
  if(SAVED.includes(k))return;SAVED.push(k);SAVED.sort((a,b)=>a-b);
- try{localStorage.setItem('lumenfall:won',JSON.stringify(SAVED))}catch(e){}}
+ try{localStorage.setItem('lumenfall:pic-won',JSON.stringify(SAVED))}catch(e){}}
 const starStr=n=>'★'.repeat(n)+'☆'.repeat(3-n);
 function parText(){return CUR.rotate?`${CUR.par}번 만에`:`방울 ${CUR.par}개로`}
 function showStars(st,moves){
@@ -610,7 +697,7 @@ function buildGallery(){
   lit=sl;
  });
  /* 고리 정보까지 지금 판으로 되돌린다. 조각 순서는 같게 만들어진다. */
- if(CUR){useGeo(CUR.geo);buildSym()}else{REG=sREG;ADJ=sADJ;GNAME=sGN}
+ if(CUR){useGeo(CUR.geo);if(CUR.pic)LOCK=CUR.lock.slice();else buildSym()}else{REG=sREG;ADJ=sADJ;GNAME=sGN}
  updGal();
 }
 function load(k){
@@ -623,8 +710,9 @@ function load(k){
  const tm=TIMES[Math.floor(k/4)%4];document.body.dataset.time=tm;
  $('sub').innerHTML=CUR.name+' · '+(k+1)+'<span class="timechip">'+TNAME[tm]+'</span>';
  $('nextBtn').classList.remove('show');$('msg').textContent='';
+ cat('curious',true,2200);
  const best=STARS[k]||0;
- $('par').innerHTML=`<b>★★★</b> ${parText()} · 되돌리기 없이`+(best?`<span class="best">${starStr(best)}</span>`:'');
+ $('par').innerHTML=`<b>★★★</b> <span class="nw">${parText()}</span> · <span class="nw">되돌리기 없이</span>`+(best?`<span class="best">${starStr(best)}</span>`:'');
  render()}
 loadSaved();updGal();initMusic();
 try{if(localStorage.getItem('lumenfall:sound')==='0'){sound=false;musicOn=false;$('soundBtn').textContent='소리 끔'}}catch(e){}
