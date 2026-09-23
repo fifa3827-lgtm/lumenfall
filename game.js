@@ -877,9 +877,8 @@ function saveSill(){try{localStorage.setItem('lumenfall:sill',JSON.stringify(SIL
 const svgOf=d=>`<svg viewBox="0 0 64 64" aria-hidden="true">${d.svg}</svg>`;
 function renderSill(fresh){
  const ds=SILL.map(id=>DECO.find(d=>d.id===id)).filter(Boolean),el=$('sill');
- el.classList.toggle('has',ds.length>0);
  const one=d=>`<div class="${d.id===fresh?'d':''}" title="${d.name}">${svgOf(d)}</div>`;
- el.innerHTML=`<div class="side">${ds.filter((_,i)=>i%2===0).map(one).join('')}</div><div class="side">${ds.filter((_,i)=>i%2===1).map(one).join('')}</div>`;
+ el.innerHTML=ds.map(one).join('');
 }
 function gotDeco(before){
  const now=starTotal(),fresh=DECO.filter(d=>d.need>before&&d.need<=now);if(!fresh.length)return;
