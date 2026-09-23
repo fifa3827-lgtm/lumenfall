@@ -79,10 +79,17 @@ body.lit[data-time="dawn"]{background:radial-gradient(120% 90% at 50% 6%,#6E4A58
 body.lit[data-time="noon"]{background:radial-gradient(120% 90% at 50% 6%,#7A5E34 0%,#3C2E18 45%,#17110A 100%)}
 body.lit[data-time="dusk"]{background:radial-gradient(120% 90% at 50% 6%,#7E4632 0%,#3E2014 45%,#170B06 100%)}
 body.lit[data-time="night"]{background:radial-gradient(120% 90% at 50% 6%,#2A3960 0%,#121A34 45%,#060913 100%)}
+.par{display:block;margin-top:6px;font-size:12px;color:#E6D5B8;opacity:.8}
+.par b{color:#F5CE8A;font-weight:400;letter-spacing:1px;margin-right:3px}
+.par .best{margin-left:8px;color:#F5CE8A;letter-spacing:1px}
+.stars{font-size:30px;letter-spacing:6px;line-height:1.1;color:#F5CE8A;text-shadow:0 0 14px #F5CE8A66}
+.stars .st{display:inline-block;opacity:0;animation:starin .5s cubic-bezier(.3,1.6,.5,1) forwards}
+@keyframes starin{0%{opacity:0;transform:scale(.2) rotate(-40deg)}100%{opacity:1;transform:scale(1)}}
+.msg .ok{color:#F3DFB6}.msg .no{color:#E6D5B8;opacity:.5;text-decoration:line-through}
 .timechip{display:inline-block;margin-left:8px;font-size:11px;color:#F3E2C4;opacity:.75;letter-spacing:0}
 @keyframes boardpop{0%{transform:scale(1)}35%{transform:scale(1.045)}65%{transform:scale(.99)}100%{transform:scale(1)}}
 .boardwrap.pop{animation:boardpop .7s cubic-bezier(.3,1.4,.5,1)}
-@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}.stars .st{opacity:1}}
 </style>
 </head>
 <body>
@@ -95,7 +102,7 @@ body.lit[data-time="night"]{background:radial-gradient(120% 90% at 50% 6%,#2A396
   </header>
   <div class="goalrow">
     <canvas id="goal" width="260" height="260" style="width:96px;height:96px"></canvas>
-    <div class="goallab">이 창이 되도록<br>물감을 떨어뜨리세요</div>
+    <div class="goallab">이 창이 되도록<br>물감을 떨어뜨리세요<span class="par" id="par"></span></div>
   </div>
   <div class="boardwrap"><canvas id="board" width="1000" height="1000"></canvas></div>
   <div class="paints" id="paints"></div>
