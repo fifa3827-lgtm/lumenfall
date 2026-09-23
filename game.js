@@ -903,20 +903,131 @@ function gotHouse(before){
  setTimeout(()=>{tone(660,.4,'triangle',.06);tone(990,.5,'sine',.05,0,.18);buzz([0,20,60,20]);cat('love',true);catHearts(6)},2200);
  $('msg').insertAdjacentHTML('beforeend',`<small class="newdeco">「${fresh[0].set}」 그림을 다 모았어요!<br>마을 ${fresh.map(b=>b.name).join(' · ')}에 불이 켜졌어요 · 창고에서 보세요</small>`);
 }
-/* ---------- 창턱 장식 ---------- */
-/* 별(단계마다 최고 기록)을 모으면 장식이 하나씩 생긴다. 창 아래 창턱에 넷까지 올려 둔다. */
+/* ---------- 창턱 장식 · 방 꾸미기 ---------- */
+/* 별(단계마다 최고 기록)을 모으면 장식이 하나씩 생긴다. 얻은 장식은 열 개까지 꺼내 놓을 수 있다.
+   놓는 자리는 아래 창턱(늘 그대로)과 벽 선반(세 개까지). 선반은 게임 그림(창과 목표 그림)과 안내 글을
+   절대 가리지 않는 빈 벽에만 걸린다. 고양이는 창턱 위에서만 옮긴다(몸이 커서 선반에 올리면 그림을 가린다).
+   자리 기록 lumenfall:room = {cat:{s:'sill',x}, shelves:[{x,y}], items:[{id,s,x}]}
+   s가 'sill'이면 x는 창턱 폭에서의 비율(0~1), 선반 번호면 x는 선반 가운데에서 벗어난 정도(-0.42~0.42).
+   선반 x·y는 방(목표 그림 줄 위 ~ 창턱) 안의 픽셀 대신 비율이고 y는 선반 윗면. */
 let SILL=[];
 try{SILL=JSON.parse(localStorage.getItem('lumenfall:sill')||'[]')||[]}catch(e){SILL=[]}
-const SILL_MAX=4;
+const SILL_MAX=10,SH_MAX=3,SH_W=96,SH_BELOW=16,SH_ABOVE=54;
+let ROOM=null;
+try{ROOM=JSON.parse(localStorage.getItem('lumenfall:room')||'null')}catch(e){ROOM=null}
+if(!ROOM||!Array.isArray(ROOM.items))ROOM={cat:{s:'sill',x:.87},shelves:[],items:[]};
+if(!Array.isArray(ROOM.shelves)){ROOM.shelves=[];ROOM.items.forEach(o=>{if(o.s!=='sill'){o.s='sill';o.x=-1}});delete ROOM.tables}
+if(ROOM.cat.s!=='sill')ROOM.cat={s:'sill',x:.87};
 function starTotal(){let t=0;for(const k in STARS)t+=+STARS[k]||0;return t}
-function saveSill(){try{localStorage.setItem('lumenfall:sill',JSON.stringify(SILL))}catch(e){}}
+function saveRoom(){SILL=ROOM.items.map(o=>o.id);
+ try{localStorage.setItem('lumenfall:sill',JSON.stringify(SILL));localStorage.setItem('lumenfall:room',JSON.stringify(ROOM))}catch(e){}}
+function saveSill(){ /* 목록(SILL)이 바뀌면 방 자리도 맞춘다 */
+ ROOM.items=ROOM.items.filter(o=>SILL.includes(o.id));
+ ROOM.items.forEach(o=>{if(o.x===-1)o.x=sillFree()});
+ SILL.forEach(id=>{if(!ROOM.items.some(o=>o.id===id))ROOM.items.push({id,s:'sill',x:sillFree()})});saveRoom()}
+/* 창턱에서 비어 있는 자리 하나(왼쪽부터). 고양이 자리는 피한다 */
+function sillFree(){const used=ROOM.items.filter(o=>o.s==='sill'&&o.x>=0).map(o=>o.x);used.push(ROOM.cat.x,ROOM.cat.x-.08);
+ for(let x=.07;x<.96;x+=.11)if(used.every(u=>Math.abs(u-x)>.09))return +x.toFixed(3);return .07+Math.random()*.6}
 /* 장식은 제미나이 그림(ART.deco)을 쓰고, 그림이 없으면 deco.js의 SVG로 그린다 */
 const svgOf=d=>(typeof ART!=='undefined'&&ART.deco[d.id])?`<img class="dimg d-${d.id}" src="${ART.deco[d.id]}" alt="" draggable="false">`:`<svg viewBox="0 0 64 64" aria-hidden="true">${d.svg}</svg>`;
-function renderSill(fresh){
- const ds=SILL.map(id=>DECO.find(d=>d.id===id)).filter(Boolean),el=$('sill');
- const one=d=>`<div class="${d.id===fresh?'d':''}" title="${d.name}">${svgOf(d)}</div>`;
- el.innerHTML=ds.map(one).join('');
+/* 벽 선반: 아래 창턱과 같은 나무 판 + 작은 받침 두 개 */
+const SH_SVG=`<svg viewBox="0 0 96 26" aria-hidden="true"><defs><linearGradient id="shw" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8A6440"/><stop offset="1" stop-color="#5A3E26"/></linearGradient></defs>
+<path d="M14 9V14Q14 24 26 24H28V9ZM82 9V14Q82 24 70 24H68V9Z" fill="#4A3220" stroke="#3B2515" stroke-width="1.2"/>
+<rect x="1" y="1" width="94" height="9" rx="2" fill="url(#shw)" stroke="#3B2515" stroke-width="1.2"/><path d="M4 3.2H92" stroke="#B08658" stroke-width="1.1" opacity=".85"/></svg>`;
+/* 방의 크기: 목표 그림 줄 위에서 창턱 윗면까지 */
+/* 가로로 넓은 화면(태블릿·컴퓨터)에서는 방이 화면 양옆 빈 벽까지 넓어져 선반을 더 달 수 있다 */
+function roomGeo(){const room=$('room'),wrap=room.parentElement,sb=$('sillBar'),gr=document.querySelector('.goalrow');
+ const off=Math.max(0,wrap.getBoundingClientRect().left),top=gr.offsetTop-6,line=sb.offsetTop+sb.offsetHeight-3;
+ const W=Math.max(wrap.clientWidth,document.documentElement.clientWidth);
+ return {top,H:line-top,W,off,sx0:off+sb.offsetLeft,sw:sb.offsetWidth}}
+/* 선반이 가리면 안 되는 곳: 창(게임 그림) 전체, 목표 그림, 안내 글, 창턱 위 고양이 */
+function noGo(g){const base=$('room').getBoundingClientRect(),out=[];
+ const add=(r,m)=>{if(r&&r.width)out.push({l:r.left-base.left-m,t:r.top-base.top-m,r:r.right-base.left+m,b:r.bottom-base.top+m})};
+ add($('board').getBoundingClientRect(),6);add($('goal').getBoundingClientRect(),6);
+ const rg=document.createRange();rg.selectNodeContents(document.querySelector('.goallab'));[...rg.getClientRects()].forEach(r=>add(r,6));
+ const cb=$('catbox').getBoundingClientRect();if(cb.width)add(cb,4);
+ return out}
+function shelfOk(g,ng,x,y,skip){const a={l:x-SH_W/2-4,r:x+SH_W/2+4,t:y-SH_ABOVE,b:y+SH_BELOW+4};
+ if(a.l<0||a.r>g.W||a.t<0||a.b>g.H-56)return false;
+ if(ng.some(n=>a.l<n.r&&a.r>n.l&&a.t<n.b&&a.b>n.t))return false;
+ return ROOM.shelves.every((s,i)=>i===skip||Math.abs(s.x*g.W-x)>=SH_W+6||Math.abs(s.y*g.H-y)>=SH_ABOVE+SH_BELOW+6)}
+/* (x,y)에서 가장 가까운, 선반을 걸 수 있는 빈 벽. 없으면 null */
+function shelfSpot(g,ng,x,y,skip){let best=null,bd=1e9;
+ for(let yy=SH_ABOVE;yy<=g.H-60-SH_BELOW;yy+=4)for(let xx=SH_W/2+4;xx<=g.W-SH_W/2-4;xx+=4){
+  const d=(xx-x)**2+(yy-y)**2;if(d<bd&&shelfOk(g,ng,xx,yy,skip)){bd=d;best={x:xx,y:yy}}}
+ return best}
+function surfPos(g,s,x){if(s==='sill')return {x:g.sx0+x*g.sw,y:g.H};const t=ROOM.shelves[s];if(!t)return {x:g.sx0+.5*g.sw,y:g.H};
+ return {x:t.x*g.W+x*SH_W,y:t.y*g.H}}
+function renderRoom(fresh){
+ const g=roomGeo(),room=$('room');room.style.top=g.top+'px';room.style.height=g.H+'px';room.style.left=(-g.off)+'px';room.style.width=g.W+'px';
+ const c=surfPos(g,'sill',ROOM.cat.x),cb=$('catbox');cb.style.left=c.x+'px';cb.style.top=c.y+2+'px';cb.style.zIndex=3+Math.round(c.y/10);
+ /* 화면 크기·안내 글 길이가 바뀌어 선반이 그림에 걸리면 가장 가까운 빈 벽으로 옮기고, 빈 벽이 없으면 치운다 */
+ const ng=noGo(g);let moved=false;
+ for(let i=ROOM.shelves.length-1;i>=0;i--){const s=ROOM.shelves[i],x=s.x*g.W,y=s.y*g.H;
+  if(shelfOk(g,ng,x,y,i))continue;const sp=shelfSpot(g,ng,x,y,i);moved=true;
+  if(sp){s.x=sp.x/g.W;s.y=sp.y/g.H}else dropShelf(i)}
+ if(moved)saveRoom();
+ $('roomT').innerHTML=ROOM.shelves.map((t,i)=>`<div class="tbl" data-k="t${i}" style="left:${t.x*g.W}px;top:${t.y*g.H+SH_BELOW+10}px">${SH_SVG}</div>`).join('');
+ ROOM.items=ROOM.items.filter(o=>o.s==='sill'||ROOM.shelves[o.s]);
+ $('roomI').innerHTML=ROOM.items.map((o,i)=>{const d=DECO.find(d=>d.id===o.id);if(!d)return'';const p=surfPos(g,o.s,o.x);
+  return `<div class="it${o.id===fresh?' d':''}" data-k="i${i}" title="${d.name}" style="left:${p.x}px;top:${p.y}px;z-index:${2+Math.round(p.y/10)}">${svgOf(d)}</div>`}).join('');
+ if(decorating)renderTray();
 }
+function dropShelf(ti){ROOM.items.forEach(o=>{if(o.s===ti){o.s='sill';o.x=-1}else if(typeof o.s==='number'&&o.s>ti)o.s--});
+ ROOM.shelves.splice(ti,1);ROOM.items.forEach(o=>{if(o.x===-1)o.x=sillFree()})}
+const renderSill=renderRoom;
+/* ----- 꾸미기 모드 ----- */
+let decorating=false,rdrag=null;
+function setDecor(on){decorating=on;document.body.classList.toggle('decorating',on);if(on){peek=false;render()}renderRoom();sPick()}
+function hint(t){$('decohint').textContent=t}
+function renderTray(){
+ const tot=starTotal(),free=DECO.filter(d=>tot>=d.need&&!SILL.includes(d.id));
+ $('tray').innerHTML=free.length?free.map(d=>`<button data-id="${d.id}" title="${d.name}">${svgOf(d)}</button>`).join(''):`<span class="empty2">${DECO.some(d=>tot>=d.need)?'얻은 장식을 모두 꺼내 놓았어요':'별을 모으면 장식이 생겨요'}</span>`;
+ $('tblBtn').disabled=ROOM.shelves.length>=SH_MAX;$('tblBtn').textContent=`선반 달기 ${ROOM.shelves.length}/${SH_MAX}`;
+ hint(`장식 ${SILL.length}/${SILL_MAX} · 장식·선반·고양이를 끌어서 옮겨요. 아래 칸으로 끌어 오면 내려놓아요.`)}
+$('decoBtn').addEventListener('click',()=>setDecor(true));
+$('decoDone').addEventListener('click',()=>setDecor(false));
+$('tray').addEventListener('click',e=>{const b=e.target.closest('button[data-id]');if(!b)return;
+ if(SILL.length>=SILL_MAX){hint(`한 번에 ${SILL_MAX}개까지 놓을 수 있어요. 놓인 장식 하나를 아래 칸으로 끌어 내려 주세요.`);return}
+ ROOM.items.push({id:b.dataset.id,s:'sill',x:sillFree()});saveRoom();renderRoom(b.dataset.id);sPick()});
+$('tblBtn').addEventListener('click',()=>{if(ROOM.shelves.length>=SH_MAX)return;const g=roomGeo(),ng=noGo(g);
+ const sp=shelfSpot(g,ng,g.W,0,-1);
+ if(!sp){hint('그림을 가리지 않고 선반을 달 빈 벽이 더 없어요.');return}
+ ROOM.shelves.push({x:sp.x/g.W,y:sp.y/g.H});saveRoom();renderRoom();sPick()});
+$('resetRoom').addEventListener('click',()=>{ROOM.shelves=[];ROOM.cat={s:'sill',x:.87};
+ ROOM.items.forEach(o=>{o.s='sill';o.x=-1});ROOM.items.forEach(o=>{o.x=sillFree()});saveRoom();renderRoom();sPick()});
+/* 끌기: 놓을 때 가장 가까운 윗면(창턱이나 선반)에 앉힌다. 아래 칸 위에서 놓으면 내려놓는다.
+   선반은 그림을 가리지 않는 가장 가까운 빈 벽에 붙는다. 고양이는 창턱을 따라서만 움직인다 */
+function roomPt(e){const r=$('room').getBoundingClientRect();return {x:e.clientX-r.left,y:e.clientY-r.top}}
+function snapFor(g,p){let best={s:'sill',y:g.H,x0:g.sx0,x1:g.sx0+g.sw},bd=Math.abs(p.y-g.H);
+ ROOM.shelves.forEach((t,i)=>{const cx=t.x*g.W,y=t.y*g.H;
+  if(p.x>cx-SH_W/2-6&&p.x<cx+SH_W/2+6){const d=Math.abs(p.y-y);if(d<bd){bd=d;best={s:i,y,x0:cx-SH_W/2,x1:cx+SH_W/2}}}});return best}
+function overTray(e){const r=$('tray').getBoundingClientRect();return e.clientY>r.top-6&&e.clientY<r.bottom+6&&e.clientX>r.left&&e.clientX<r.right}
+$('room').addEventListener('pointerdown',e=>{if(!decorating)return;const el=e.target.closest('.it,.tbl,.catbox');if(!el)return;
+ e.preventDefault();const p=roomPt(e),k=el===$('catbox')?'cat':el.dataset.k;
+ rdrag={el,k,dx:parseFloat(el.style.left)-p.x,dy:parseFloat(el.style.top)-p.y,id:e.pointerId,ng:k[0]==='t'?noGo(roomGeo()):null};el.classList.add('drag');
+ try{el.setPointerCapture(e.pointerId)}catch(_){} sPick()});
+$('room').addEventListener('pointermove',e=>{if(!rdrag||e.pointerId!==rdrag.id)return;const p=roomPt(e),g=roomGeo();
+ let x=p.x+rdrag.dx,y=p.y+rdrag.dy;if(rdrag.k==='cat')y=g.H+2;
+ rdrag.el.style.left=x+'px';rdrag.el.style.top=y+'px';
+ const sl=$('snapline'),tr=overTray(e)&&rdrag.k!=='cat';$('tray').classList.toggle('hot',tr);
+ if(rdrag.k[0]==='t'){const ok=shelfOk(g,rdrag.ng,x,y-SH_BELOW-10,+rdrag.k.slice(1));rdrag.el.classList.toggle('bad',!ok&&!tr);sl.classList.remove('on')}
+ else if(!tr){const sn=rdrag.k==='cat'?{x0:g.sx0,x1:g.sx0+g.sw,y:g.H}:snapFor(g,{x,y});sl.style.left=sn.x0+'px';sl.style.width=(sn.x1-sn.x0)+'px';sl.style.top=sn.y+'px';sl.classList.add('on')}
+ else sl.classList.remove('on')});
+function endRoomDrag(e){if(!rdrag||e.pointerId!==rdrag.id)return;const d=rdrag;rdrag=null;d.el.classList.remove('drag','bad');
+ $('snapline').classList.remove('on');$('tray').classList.remove('hot');
+ const p=roomPt(e),g=roomGeo(),x=p.x+d.dx,y=p.y+d.dy,tray=overTray(e);
+ if(d.k==='cat'){ROOM.cat.x=Math.max(.06,Math.min(.94,(x-g.sx0)/g.sw))}
+ else if(d.k[0]==='i'){const o=ROOM.items[+d.k.slice(1)];
+  if(tray)ROOM.items.splice(+d.k.slice(1),1);
+  else{const sn=snapFor(g,{x,y});o.s=sn.s;
+   o.x=sn.s==='sill'?Math.max(.03,Math.min(.97,(x-g.sx0)/g.sw)):Math.max(-.42,Math.min(.42,(x-ROOM.shelves[sn.s].x*g.W)/SH_W))}}
+ else{const ti=+d.k.slice(1);
+  if(tray)dropShelf(ti);
+  else{const sp=shelfSpot(g,d.ng||noGo(g),x,y-SH_BELOW-10,ti);
+   if(sp){ROOM.shelves[ti].x=sp.x/g.W;ROOM.shelves[ti].y=sp.y/g.H}else hint('그림을 가리지 않는 빈 벽에만 선반을 달 수 있어요.')}}
+ saveRoom();renderRoom();tone(620,.06,'sine',.06);buzz(8)}
+$('room').addEventListener('pointerup',endRoomDrag);$('room').addEventListener('pointercancel',endRoomDrag);
 function gotDeco(before){
  const now=starTotal(),fresh=DECO.filter(d=>d.need>before&&d.need<=now);if(!fresh.length)return;
  let placed=false;
@@ -929,17 +1040,17 @@ function gotDeco(before){
 function decoSection(){
  const tot=starTotal(),nx=DECO.find(d=>d.need>tot),sec=document.createElement('section');sec.className='gset';
  sec.innerHTML=`<h3>창턱 꾸미기<span>별 ${tot}개${nx?` · 다음 장식까지 ${nx.need-tot}개`:' · 모두 얻었어요'}</span></h3><div class="decos"></div>`+
-  `<p class="dnote">얻은 장식을 누르면 창턱에 올리거나 내려요. 한 번에 ${SILL_MAX}개까지 올릴 수 있어요.</p>`;
+  `<p class="dnote">얻은 장식을 누르면 창턱에 올리거나 내려요. 한 번에 ${SILL_MAX}개까지 놓을 수 있어요. 자리를 옮기려면 게임 화면의 「꾸미기」를 누르세요.</p>`;
  const box=sec.querySelector('.decos'),note=sec.querySelector('.dnote');
  DECO.forEach(d=>{const open=tot>=d.need,b=document.createElement('button');
   b.className='dk'+(open?'':' lock')+(SILL.includes(d.id)?' on':'');
   b.innerHTML=svgOf(d)+`<span>${open?d.name:'별 '+d.need+'개'}</span>`;
   if(open)b.addEventListener('click',()=>{
    const at=SILL.indexOf(d.id);
-   if(at>=0){SILL.splice(at,1);b.classList.remove('on');renderSill()}
+   if(at>=0){SILL.splice(at,1);b.classList.remove('on');saveSill();renderSill()}
    else if(SILL.length>=SILL_MAX){note.textContent='창턱이 가득 찼어요. 올려 둔 장식 하나를 먼저 눌러 내려 주세요.';return}
-   else{SILL.push(d.id);b.classList.add('on');renderSill(d.id)}
-   saveSill();sPick()});
+   else{SILL.push(d.id);b.classList.add('on');saveSill();renderSill(d.id)}
+   sPick()});
   box.appendChild(b)});
  return sec;
 }
@@ -997,11 +1108,12 @@ function load(k){
  else if(CUR.intro==='light')$('msg').innerHTML='<small>반짝이는 빛 방울은 닿은 조각에서 그 색을 빼요.<br>주황에 빛 노랑을 떨어뜨리면 빨강이 돼요</small>';
  const best=STARS[k]||0;
  $('par').innerHTML=`<b>★★★</b> <span class="nw">${parText()}</span> · <span class="nw">되돌리기 없이</span>`+(best?`<span class="best">${starStr(best)}</span>`:'');
- render()}
-window.addEventListener('resize',()=>{if(CUR)renderPaints()});
+ render();requestAnimationFrame(renderRoom)}
+window.addEventListener('resize',()=>{if(CUR)renderPaints();renderRoom()});
 loadSaved();updGal();
 /* 창턱이 나오기 전부터 별을 모은 사람은 처음 열 때 얻은 장식 가운데 가장 좋은 넷을 올려 둔다 */
-try{if(localStorage.getItem('lumenfall:sill')===null){const t=starTotal();SILL=DECO.filter(d=>d.need<=t).slice(-SILL_MAX).map(d=>d.id);saveSill()}}catch(e){}
+try{if(localStorage.getItem('lumenfall:sill')===null){const t=starTotal();SILL=DECO.filter(d=>d.need<=t).slice(-4).map(d=>d.id)}}catch(e){}
+saveSill();
 renderSill();initMusic();
 try{if(localStorage.getItem('lumenfall:sound')==='0'){sound=false;musicOn=false;$('soundBtn').textContent='소리 끔'}}catch(e){}
 document.addEventListener('visibilitychange',()=>{

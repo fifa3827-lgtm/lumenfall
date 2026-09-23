@@ -14,7 +14,7 @@ body{margin:0;min-height:100%;color:#EFE6D8;position:relative;overflow-x:hidden;
  display:flex;flex-direction:column;align-items:center;
  user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;transition:background 1.4s}
 body.lit{background:radial-gradient(120% 90% at 50% 8%,#241B12 0%,#130E09 45%,#080605 100%)}
-.wrap{width:100%;max-width:440px;padding:14px 16px 22px;display:flex;flex-direction:column;align-items:center;gap:12px}
+.wrap{width:100%;max-width:440px;padding:14px 16px 22px;display:flex;flex-direction:column;align-items:center;gap:12px;position:relative}
 header{width:100%;display:flex;justify-content:space-between;align-items:flex-start}
 .title{font-size:13px;font-weight:700;letter-spacing:3.5px;color:#C9B89E}
 .subrow{display:flex;align-items:center;gap:6px;margin-top:4px}
@@ -26,7 +26,7 @@ header{width:100%;display:flex;justify-content:space-between;align-items:flex-st
 #goal{flex:0 0 auto;opacity:.95;cursor:zoom-in}
 /* 고양이는 창 아래 창턱 오른쪽 끝에 앉는다. 공중에 떠 보이지 않게. 누름은 아래로 통과시킨다. */
 .goalrow{position:relative}
-.cat{position:absolute;right:0;bottom:2px;height:112px;width:auto;z-index:5;pointer-events:none;
+.cat{position:relative;display:block;height:112px;width:auto;pointer-events:none;
  filter:drop-shadow(0 6px 10px #0007);transform-origin:50% 100%}
 .cat.hop{animation:cathop .6s cubic-bezier(.3,1.6,.5,1)}
 /* 조는 고양이 머리 위 z, 기쁜 고양이 머리 위 하트 */
@@ -40,7 +40,8 @@ header{width:100%;display:flex;justify-content:space-between;align-items:flex-st
 .cathearts svg{width:100%;height:100%;display:block}
 @keyframes heartup{0%{transform:translateY(0) scale(.4);opacity:0}20%{opacity:1}100%{transform:translateY(-70px) scale(1.1);opacity:0}}
 @keyframes cathop{0%{transform:translateY(0) scale(1)}35%{transform:translateY(-10px) scale(1.04,.97)}100%{transform:translateY(0) scale(1)}}
-.goallab{font-size:14px;font-weight:600;color:#F6E8D0;line-height:1.55;text-shadow:0 1px 3px #0008}
+.goallab{font-size:14px;font-weight:600;color:#F6E8D0;line-height:1.55;text-shadow:0 1px 3px #0008;max-width:max(140px,calc(100% - 214px))}
+/* 안내 글 오른쪽은 벽 선반을 달 수 있는 빈 벽으로 남겨 둔다 */
 .boardwrap{width:min(92vw,390px,50vh);transition:filter 1.4s}
 #board{width:100%;display:block;touch-action:none;filter:drop-shadow(0 14px 30px #00000088)}
 body.lit .boardwrap{filter:drop-shadow(0 0 46px #F5CE8A4a) drop-shadow(0 0 120px #F5CE8A22)}
@@ -216,6 +217,39 @@ body.lit[data-time="night"]{background:radial-gradient(120% 90% at 50% 6%,#2A396
 .vlist small{font-size:9.5px;color:#6B5F4E}
 .vlist i{display:block;height:4px;border-radius:2px;background:#2E251C;overflow:hidden}
 .vlist i b{display:block;height:100%;background:linear-gradient(90deg,#C9923E,#F5CE8A)}
+/* 방 꾸미기: 고양이·장식·벽 선반을 놓는 층. 아래 창턱은 그대로, 선반은 게임 그림을 가리지 않는 빈 벽에만 */
+.room{position:absolute;left:0;top:0;width:100%;height:0;z-index:4;pointer-events:none}
+.room .it,.room .tbl,.catbox{position:absolute;transform:translate(-50%,-100%);pointer-events:none;touch-action:none}
+.room .it img.dimg,.room .it svg{height:48px;width:auto;display:block;filter:drop-shadow(0 2px 2px #0007)}
+.room .it img.d-candle,.room .it img.d-lantern,.room .it img.d-lamp,.room .it img.d-jack,.room .it img.d-starjar{animation:dglowimg 2.6s ease-in-out infinite}
+.room .it.d{animation:decoin2 .5s cubic-bezier(.3,1.6,.5,1) both}
+@keyframes decoin2{from{opacity:0;margin-top:-14px}to{opacity:1;margin-top:0}}
+.catbox{z-index:3}
+.room .tbl{z-index:1}
+.room .tbl svg{display:block;width:96px;height:26px;filter:drop-shadow(0 4px 5px #0008)}
+body.decorating .room .tbl.bad{filter:drop-shadow(0 0 6px #FF6B6B) saturate(.5)}
+body.decorating .room .tbl.bad::after{border-color:#FF8A8A}
+.snapline{position:absolute;height:4px;border-radius:2px;background:#F5CE8A;box-shadow:0 0 10px #F5CE8A;opacity:0;pointer-events:none;transform:translateY(-2px);transition:opacity .15s}
+.snapline.on{opacity:.9}
+body.decorating .room{pointer-events:auto}
+body.decorating .room .it,body.decorating .room .tbl,body.decorating .catbox{pointer-events:auto;cursor:grab}
+body.decorating .room .it::after,body.decorating .room .tbl::after,body.decorating .catbox::after{content:"";position:absolute;inset:-4px;border:1.5px dashed #F5CE8A88;border-radius:8px;pointer-events:none}
+body.decorating .room .drag{cursor:grabbing;z-index:9!important;filter:drop-shadow(0 8px 10px #000a)}
+body.decorating .boardwrap{filter:brightness(.72)}
+.decobar{display:none;width:100%;flex-direction:column;gap:10px;align-items:stretch}
+body.decorating .decobar{display:flex}
+body.decorating .paints,body.decorating .tools,body.decorating .msg,body.decorating .next{display:none!important}
+.decohint{font-size:12px;color:#E6D5B8;text-align:center;line-height:1.5;min-height:18px}
+.tray{display:flex;gap:6px;overflow-x:auto;min-height:66px;padding:6px;border-radius:8px;background:#0006;box-shadow:inset 0 0 0 1.5px #F5CE8A44;align-items:flex-end}
+.tray.hot{box-shadow:inset 0 0 0 2px #F5CE8A,0 0 16px #F5CE8A55}
+.tray button{flex:0 0 auto;border:0;background:none;padding:2px;cursor:pointer}
+.tray button img,.tray button svg{height:44px;width:auto;display:block}
+.tray .empty2{font-size:11px;color:#8E7F6A;margin:auto}
+.decobtns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.decobtns button{border:0;font:inherit}
+.decobtns button{background:#2A2119;color:#F3DFB6;padding:9px 14px;border-radius:18px;font-size:13px;cursor:pointer;box-shadow:inset 0 0 0 1px #8E7A5A}
+.decobtns #decoDone{background:#F5CE8A;color:#2A1C0E}
+.decobtns button:disabled{opacity:.45}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}.stars .st{opacity:1}}
 </style>
 </head>
@@ -232,9 +266,18 @@ body.lit[data-time="night"]{background:radial-gradient(120% 90% at 50% 6%,#2A396
     <div class="goallab">이 창이 되도록<br>물감을 떨어뜨리세요<span class="par" id="par"></span><span class="peekhint">그림을 누르면 크게 보여요</span></div>
   </div>
   <div class="boardwrap"><canvas id="board" width="1000" height="1000"></canvas></div>
-  <div class="sill"><div class="side" id="sill"></div><img class="cat" id="cat" alt="" src=""><div class="catz" id="catz"><b>z</b><b>z</b><b>Z</b></div><div class="cathearts" id="cathearts"></div></div>
+  <div class="sill" id="sillBar"></div>
+  <!-- 방: 고양이·장식·벽 선반을 놓는 층. 꾸미기 때만 누를 수 있다 -->
+  <div class="room" id="room"><div id="roomT"></div><div id="roomI"></div>
+    <div class="catbox" id="catbox"><img class="cat" id="cat" alt="" src="" draggable="false"><div class="catz" id="catz"><b>z</b><b>z</b><b>Z</b></div><div class="cathearts" id="cathearts"></div></div>
+    <div class="snapline" id="snapline"></div></div>
   <div class="paints" id="paints"></div>
-  <div class="tools"><button id="undoBtn">되돌리기</button></div>
+  <div class="tools"><button id="undoBtn">되돌리기</button><button id="decoBtn">꾸미기</button></div>
+  <div class="decobar" id="decobar">
+    <div class="decohint" id="decohint">장식·선반·고양이를 끌어서 옮겨요. 아래 칸으로 끌어 오면 내려놓아요.</div>
+    <div class="tray" id="tray"></div>
+    <div class="decobtns"><button id="tblBtn">선반 달기</button><button id="resetRoom">처음처럼</button><button id="decoDone">다 했어요</button></div>
+  </div>
   <div class="msg" id="msg"></div>
   <button class="next" id="nextBtn">다음 창</button>
 </div>
