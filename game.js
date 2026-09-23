@@ -752,8 +752,9 @@ function check(){
  motes=[...Array(30)].map(()=>{const a=Math.random()*Math.PI*2,d=Math.random()*RR*.9;
   return {x:CX+Math.cos(a)*d,y:CY+Math.sin(a)*d,r:1.8+Math.random()*4,a:.25+Math.random()*.5,p:Math.random()*6,vy:-(.1+Math.random()*.28)}});
  const moves=hist.length,st=1+(undone?0:1)+(moves<=CUR.par?1:0);
+ const before=starTotal();
  document.body.classList.add('lit');sWin();saveWon(li,st);updGal();fxWin();cat(st===3?'sunny':'happy',true);
- showStars(st,moves);
+ showStars(st,moves);gotDeco(before);
  litT=performance.now();
  (function b(){lit=Math.min(1,(performance.now()-litT)/1700);
   motes.forEach(m=>{m.y+=m.vy;if(m.y<CY-RR)m.y=CY+RR});render();
@@ -785,7 +786,10 @@ function loadSaved(){try{const v=localStorage.getItem('lumenfall:pic-won');SAVED
 /* 창고용 완성 그림 기억: 판을 다시 만들지 않고 바로 그리려고 목표 색과 조각 모양 종류를 적어 둔다 */
 let SNAP={};
 try{SNAP=JSON.parse(localStorage.getItem('lumenfall:pic-snap')||'{}')||{}}catch(e){SNAP={}}
-function snapOf(k,lv){return {g:lv.goal.join(''),f:lv.geo.fine?1:0,c:(lv.clear||[]).map((x,i)=>x?i:-1).filter(i=>i>=0)}}
+/* 도안 조각이 바뀌면(SNAPV를 올리면) 예전 기록은 버리고 다시 만든다 */
+const SNAPV=2;
+function snapOk(k){const sn=SNAP[k];return !!sn&&sn.v===SNAPV}
+function snapOf(k,lv){return {v:SNAPV,g:lv.goal.join(''),f:lv.geo.fine?1:0,c:(lv.clear||[]).map((x,i)=>x?i:-1).filter(i=>i>=0)}}
 function saveSnap(k,lv){SNAP[k]=snapOf(k,lv);try{localStorage.setItem('lumenfall:pic-snap',JSON.stringify(SNAP))}catch(e){}}
 function saveWon(k,st){
  if(CUR&&CUR.pic)saveSnap(k,CUR);
@@ -819,6 +823,7 @@ function drawThumb(cv,g,lit1){
 }
 function buildGallery(){
  const wrap=$('gallery');wrap.innerHTML='';
+ wrap.appendChild(decoSection());
  const N=PICS.length,byName={};PICS.forEach((p,i)=>byName[p.name]=i);
  let have=0;
  SETS.forEach(([title,names])=>{
@@ -833,7 +838,7 @@ function buildGallery(){
    const fr=document.createElement('div');fr.className='frame';fr.appendChild(cv);d.appendChild(fr);
    const lab=document.createElement('span');
    if(ks.length){const k=Math.max(...ks),best=Math.max(...ks.map(x=>STARS[x]||1));
-    if(!SNAP[k])saveSnap(k,genLevel(k));
+    if(!snapOk(k))saveSnap(k,genLevel(k));
     const sn=SNAP[k];usePic(pi,!!sn.f);sn.c.forEach(i=>CLEAR[i]=true);
     drawThumb(cv,sn.g.split('').map(Number),true);lab.innerHTML=`${n}<b>${starStr(best)}</b>${ks.length>1?`<i>${ks.length}장</i>`:''}`}
    else{usePic(pi,false);drawThumb(cv,new Array(REG.length).fill(0),false);lab.textContent='?'}
@@ -844,6 +849,80 @@ function buildGallery(){
  if(CUR){useGeo(CUR.geo);if(CUR.pic){LOCK=CUR.lock.slice();TWIN=CUR.twin.slice();DRY=CUR.dry.slice();CLEAR=CUR.clear.slice()}}
  $('galEmpty').classList.add('hide');
 }
+/* ---------- 창턱 장식 ---------- */
+/* 별(단계마다 최고 기록)을 모으면 장식이 하나씩 생긴다. 창 아래 창턱에 넷까지 올려 둔다. */
+let SILL=[];
+try{SILL=JSON.parse(localStorage.getItem('lumenfall:sill')||'[]')||[]}catch(e){SILL=[]}
+const SILL_MAX=4;
+function starTotal(){let t=0;for(const k in STARS)t+=+STARS[k]||0;return t}
+function saveSill(){try{localStorage.setItem('lumenfall:sill',JSON.stringify(SILL))}catch(e){}}
+const svgOf=d=>`<svg viewBox="0 0 64 64" aria-hidden="true">${d.svg}</svg>`;
+function renderSill(fresh){
+ const ds=SILL.map(id=>DECO.find(d=>d.id===id)).filter(Boolean),el=$('sill');
+ el.classList.toggle('has',ds.length>0);
+ const one=d=>`<div class="${d.id===fresh?'d':''}" title="${d.name}">${svgOf(d)}</div>`;
+ el.innerHTML=`<div class="side">${ds.filter((_,i)=>i%2===0).map(one).join('')}</div><div class="side">${ds.filter((_,i)=>i%2===1).map(one).join('')}</div>`;
+}
+function gotDeco(before){
+ const now=starTotal(),fresh=DECO.filter(d=>d.need>before&&d.need<=now);if(!fresh.length)return;
+ let placed=false;
+ fresh.forEach(d=>{if(SILL.length<SILL_MAX&&!SILL.includes(d.id)){SILL.push(d.id);placed=true}});
+ saveSill();
+ setTimeout(()=>{renderSill(fresh[fresh.length-1].id);tone(1320,.3,'sine',.06);buzz(12)},1900);
+ $('msg').insertAdjacentHTML('beforeend',`<small class="newdeco">새 장식 「${fresh.map(d=>d.name).join('」 「')}」을 얻었어요`+
+  (placed?'<br>창턱에 올려 두었어요':'<br>창고에서 창턱에 올릴 수 있어요')+'</small>');
+}
+function decoSection(){
+ const tot=starTotal(),nx=DECO.find(d=>d.need>tot),sec=document.createElement('section');sec.className='gset';
+ sec.innerHTML=`<h3>창턱 꾸미기<span>별 ${tot}개${nx?` · 다음 장식까지 ${nx.need-tot}개`:' · 모두 얻었어요'}</span></h3><div class="decos"></div>`+
+  `<p class="dnote">얻은 장식을 누르면 창턱에 올리거나 내려요. 한 번에 ${SILL_MAX}개까지 올릴 수 있어요.</p>`;
+ const box=sec.querySelector('.decos'),note=sec.querySelector('.dnote');
+ DECO.forEach(d=>{const open=tot>=d.need,b=document.createElement('button');
+  b.className='dk'+(open?'':' lock')+(SILL.includes(d.id)?' on':'');
+  b.innerHTML=svgOf(d)+`<span>${open?d.name:'별 '+d.need+'개'}</span>`;
+  if(open)b.addEventListener('click',()=>{
+   const at=SILL.indexOf(d.id);
+   if(at>=0){SILL.splice(at,1);b.classList.remove('on');renderSill()}
+   else if(SILL.length>=SILL_MAX){note.textContent='창턱이 가득 찼어요. 올려 둔 장식 하나를 먼저 눌러 내려 주세요.';return}
+   else{SILL.push(d.id);b.classList.add('on');renderSill(d.id)}
+   saveSill();sPick()});
+  box.appendChild(b)});
+ return sec;
+}
+/* ---------- 단계 고르기 ---------- */
+/* 깬 단계와 그다음 한 단계까지 고를 수 있다. 다시 해서 별 세 개에 도전할 수 있게. */
+const NEWGLASS={10:1,17:1,23:1,29:1};
+function frontier(){return Math.max(SAVED.length?Math.max(...SAVED)+1:0,li)}
+function buildLevels(){
+ const wrap=$('lvList');wrap.innerHTML='';
+ const F=frontier(),upto=Math.max(10,Math.ceil((F+1)/10)*10),N=PICS.length;
+ $('lvCount').textContent=`별 ${starTotal()}개`;
+ let curEl=null;
+ for(let s=0;s<upto;s+=10){
+  let got=0;for(let k=s;k<s+10;k++)got+=STARS[k]||0;
+  const sec=document.createElement('section');sec.className='lvset';
+  sec.innerHTML=`<h3>${s+1}~${s+10}단계<span>★ ${got} / 30</span></h3><div class="lvgrid"></div>`;
+  const grid=sec.querySelector('.lvgrid');
+  for(let k=s;k<s+10;k++){
+   const won=SAVED.includes(k),open=k<=F,b=document.createElement('button');
+   b.className='lv'+(k===li?' cur':'')+(open?'':' lock')+(open&&!won?' new':'');
+   const cv=document.createElement('canvas');cv.width=cv.height=120;b.appendChild(cv);
+   b.insertAdjacentHTML('beforeend',`<em>${k+1}</em><b>${won?starStr(STARS[k]||1):open?(k===F?'새 창':'도전'):''}</b>`+(NEWGLASS[k]?'<i>새 유리</i>':''));
+   if(won){if(!snapOk(k))saveSnap(k,genLevel(k));const sn=SNAP[k];usePic(k%N,!!sn.f);
+    if(sn.g.length===REG.length){sn.c.forEach(i=>CLEAR[i]=true);drawThumb(cv,sn.g.split('').map(Number),true)}}
+   else if(open){usePic(k%N,false);drawThumb(cv,new Array(REG.length).fill(0),false)}
+   if(open)b.addEventListener('click',()=>{closeLv();if(k!==li)load(k)});
+   if(k===li)curEl=b;
+   grid.appendChild(b)}
+  wrap.appendChild(sec)}
+ if(CUR){useGeo(CUR.geo);if(CUR.pic){LOCK=CUR.lock.slice();TWIN=CUR.twin.slice();DRY=CUR.dry.slice();CLEAR=CUR.clear.slice()}}
+ if(curEl)requestAnimationFrame(()=>curEl.scrollIntoView({block:'center'}));
+}
+function openLv(){buildLevels();$('lvSheet').classList.add('open');$('lvSheet').setAttribute('aria-hidden','false');sPick()}
+function closeLv(){$('lvSheet').classList.remove('open');$('lvSheet').setAttribute('aria-hidden','true')}
+$('lvBtn').addEventListener('click',openLv);
+$('sub').addEventListener('click',openLv);
+$('closeLv').addEventListener('click',closeLv);
 function load(k){
  li=k;done=false;undone=false;hist=[];peek=false;FX=[];anim=null;lit=0;motes=[];origins=[];
  document.body.classList.remove('lit');
@@ -865,7 +944,7 @@ function load(k){
  const best=STARS[k]||0;
  $('par').innerHTML=`<b>★★★</b> <span class="nw">${parText()}</span> · <span class="nw">되돌리기 없이</span>`+(best?`<span class="best">${starStr(best)}</span>`:'');
  render()}
-loadSaved();updGal();initMusic();
+loadSaved();updGal();renderSill();initMusic();
 try{if(localStorage.getItem('lumenfall:sound')==='0'){sound=false;musicOn=false;$('soundBtn').textContent='소리 끔'}}catch(e){}
 document.addEventListener('visibilitychange',()=>{
  if(document.hidden){try{ac().suspend()}catch(e){}}

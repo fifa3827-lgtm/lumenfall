@@ -493,8 +493,8 @@ def bear():
 
 def rabbit():
     face=ell(0,0.34,0.62,0.56)
-    ears=U([ell(-0.28,-0.50,0.16,0.44,-8),ell(0.28,-0.50,0.16,0.44,8)]).difference(face)
-    inner=U([ell(-0.28,-0.50,0.07,0.32,-8),ell(0.28,-0.50,0.07,0.32,8)]).intersection(ears);ears=ears.difference(inner)
+    ears=U([ell(-0.28,-0.50,0.20,0.46,-8),ell(0.28,-0.50,0.20,0.46,8)]).difference(face)
+    inner=U([ell(-0.28,-0.46,0.075,0.30,-8),ell(0.28,-0.46,0.075,0.30,8)]).intersection(ears);ears=ears.difference(inner)
     eyes=U([circ(-0.22,0.24,0.07),circ(0.22,0.24,0.07)]);nose=poly((-0.08,0.44),(0.08,0.44),(0,0.54))
     face=face.difference(eyes).difference(nose)
     return '토끼',[(face,7,['yellow','blue']),(ears,4,['yellow','blue']),(inner,2,['red']),(U([eyes,nose]),3,['purple','red'])]
@@ -557,7 +557,10 @@ def bee():
 
 def octopus():
     head=path(bez((-0.56,0.20),(-0.70,-0.90),(0.70,-0.90),(0.56,0.20)))
-    legs=U([ell(-0.52+k*0.35,0.52,0.10,0.34,(k-1.5)*14) for k in range(4)]).difference(head)
+    from shapely.geometry import LineString
+    def leg(x0,d):  # 머리 아래에서 내려와 끝이 바깥으로 말리는 다리
+        return LineString(bez((x0,0.05),(x0+d*0.05,0.45),(x0+d*0.10,0.72),(x0+d*0.30,0.66))).buffer(0.085,cap_style=1)
+    legs=U([leg(-0.46,-1),leg(-0.16,-0.5),leg(0.16,0.5),leg(0.46,1)]).difference(head)
     eyes=U([circ(-0.20,-0.20,0.10),circ(0.20,-0.20,0.10)]);head=head.difference(eyes)
     spots=U([circ(-0.26,-0.54,0.07),circ(0.14,-0.62,0.06),circ(0.34,-0.40,0.06)]);head=head.difference(spots)
     return '문어',[(head,6,['purple','red']),(legs,8,['purple','red']),(eyes,2,['yellow']),(spots,3,['red','orange'])]

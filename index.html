@@ -18,10 +18,10 @@ body.lit{background:radial-gradient(120% 90% at 50% 8%,#241B12 0%,#130E09 45%,#0
 header{width:100%;display:flex;justify-content:space-between;align-items:flex-start}
 .title{font-size:13px;font-weight:700;letter-spacing:3.5px;color:#C9B89E}
 .subrow{display:flex;align-items:center;gap:6px;margin-top:4px}
-#sub{font-size:12px;font-weight:600;color:#E6D5B8;min-width:78px;text-shadow:0 1px 2px #0007}
+#sub{font-size:12px;font-weight:600;color:#E6D5B8;min-width:78px;text-shadow:0 1px 2px #0007;cursor:pointer}
 .subrow button,.hb button{border:0;background:none;color:#5E5343;font:inherit;font-weight:700;cursor:pointer}
 .subrow button{font-size:15px;line-height:1;padding:0 2px}
-.hb{display:flex;gap:14px}.hb button{font-size:13px;color:#E6D5B8;text-shadow:0 1px 2px #0007}
+.hb{display:flex;gap:12px;flex:0 0 auto}.hb button{white-space:nowrap;padding:2px 0;font-size:13px;color:#E6D5B8;text-shadow:0 1px 2px #0007}
 .goalrow{display:flex;align-items:center;gap:14px;align-self:flex-start;width:100%}
 #goal{flex:0 0 auto;opacity:.95;cursor:zoom-in}
 /* 고양이는 목표 줄 오른쪽 끝에 크게 앉아, 발끝이 창 위쪽 여백에 살짝 걸친다. 누름은 아래로 통과시킨다. */
@@ -92,7 +92,8 @@ body.lit .paints,body.lit .tools{display:none}
 .empty{color:#6B5F4E;font-size:12.5px;font-weight:600;line-height:1.7;text-align:center;margin:auto}
 .empty.hide{display:none}
 .title,.msg,#sub,.rng,.cnt,.goallab,.hb button,.tools button,.next,.sheettitle,.badge{font-weight:400!important}
-.title{letter-spacing:3px;font-size:15px}
+.title{letter-spacing:2.5px;font-size:15px;min-width:0}
+@media (max-width:350px){.hb{gap:9px}.hb button{font-size:12px}.title{letter-spacing:1.5px}}
 .msg{font-size:17px}
 body[data-time="dawn"]{background:radial-gradient(120% 90% at 50% 6%,#9A6A7C 0%,#5C3E4C 42%,#2A1C24 100%)}
 body[data-time="noon"]{background:radial-gradient(120% 90% at 50% 6%,#A8844C 0%,#5E4826 42%,#2A2012 100%)}
@@ -114,6 +115,55 @@ body.lit[data-time="night"]{background:radial-gradient(120% 90% at 50% 6%,#2A396
 .timechip{display:inline-block;margin-left:8px;font-size:11px;color:#F3E2C4;opacity:.75;letter-spacing:0}
 @keyframes boardpop{0%{transform:scale(1)}35%{transform:scale(1.045)}65%{transform:scale(.99)}100%{transform:scale(1)}}
 .boardwrap.pop{animation:boardpop .7s cubic-bezier(.3,1.4,.5,1)}
+/* 창턱: 창 바로 아래 나무 턱. 별로 얻은 장식을 올려 둔다(누름은 통과) */
+.sill{position:relative;width:min(96vw,410px);height:0;margin-top:-8px;display:flex;justify-content:space-between;align-items:flex-end;
+ padding:0 8px;pointer-events:none;z-index:2}
+.sill.has{height:50px;margin-top:-14px}
+.sill.has::after{content:"";position:absolute;left:0;right:0;bottom:-6px;height:9px;border-radius:2px;
+ background:linear-gradient(180deg,#8A6440,#5A3E26);box-shadow:0 4px 8px #0008,inset 0 1px 0 #B08658;z-index:-1}
+.sill .side{display:flex;gap:4px;align-items:flex-end}
+.sill svg{width:46px;height:46px;display:block;filter:drop-shadow(0 2px 2px #0007)}
+.sill .d{animation:decoin .5s cubic-bezier(.3,1.6,.5,1) both}
+@keyframes decoin{from{opacity:0;transform:translateY(-14px) scale(.6)}to{opacity:1;transform:none}}
+.dflame{transform-box:fill-box;transform-origin:50% 100%;animation:flick 1.6s ease-in-out infinite}
+@keyframes flick{0%,100%{transform:scale(1,1)}30%{transform:scale(.94,1.06)}60%{transform:scale(1.04,.95)}}
+.dglow{animation:glowp 2.4s ease-in-out infinite}
+@keyframes glowp{0%,100%{opacity:.75}50%{opacity:1}}
+.dsteam{animation:steam 2.8s ease-in-out infinite}
+@keyframes steam{0%{opacity:0;transform:translateY(4px)}40%{opacity:.7}100%{opacity:0;transform:translateY(-4px)}}
+.dtw{transform-box:fill-box;transform-origin:50% 50%;animation:twk 2s ease-in-out infinite}
+@keyframes twk{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(.8);opacity:.7}}
+.dfish{animation:swim 3.2s ease-in-out infinite}
+@keyframes swim{0%,100%{transform:translateX(0)}50%{transform:translateX(-6px)}}
+.dbub{animation:bub 2.6s linear infinite}
+@keyframes bub{0%{opacity:0;transform:translateY(6px)}30%{opacity:1}100%{opacity:0;transform:translateY(-8px)}}
+/* 창고 위 창턱 꾸미기 */
+.decos{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px 8px;padding:12px 10px;border-radius:4px;
+ background:linear-gradient(180deg,#2A2119,#1C1611);box-shadow:inset 0 2px 10px #0008}
+.dk{border:0;background:none;font:inherit;color:#C9B89E;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px;
+ border-radius:6px;cursor:pointer;position:relative}
+.dk svg{width:52px;height:52px}
+.dk span{font-size:10.5px;line-height:1.2;text-align:center}
+.dk.on{background:#F5CE8A1f;box-shadow:inset 0 0 0 1.5px #F5CE8A99}
+.dk.on::after{content:"창턱에";position:absolute;top:2px;right:2px;font-size:9px;color:#1A130C;background:#F5CE8A;border-radius:6px;padding:0 4px}
+.dk.lock{cursor:default}.dk.lock svg{filter:brightness(0) opacity(.35)}
+.dk.lock span{color:#6B5F4E}
+.dnote{font-size:11px;color:#8E7F6A;margin:6px 2px 0;line-height:1.5}
+/* 단계 고르기 */
+.lvlist{overflow-y:auto;flex:1;padding:2px 2px 24px;display:flex;flex-direction:column;gap:18px}
+.lvset h3{margin:0 0 8px;font-weight:400;font-size:14px;color:#E6D5B8;letter-spacing:1px}
+.lvset h3 span{font-size:11px;color:#8E7F6A;margin-left:6px;letter-spacing:0}
+.lvgrid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.lv{border:0;font:inherit;cursor:pointer;background:#1F1812;border-radius:6px;padding:5px 3px 6px;display:flex;flex-direction:column;align-items:center;gap:2px;
+ box-shadow:inset 0 0 0 1px #3A2E23;color:#E6D5B8;position:relative}
+.lv canvas{width:100%;height:auto;display:block}
+.lv em{font-style:normal;font-size:12px}
+.lv b{font-weight:400;font-size:9.5px;letter-spacing:.5px;color:#F5CE8A;min-height:12px}
+.lv.cur{box-shadow:inset 0 0 0 1.5px #F5CE8A}
+.lv.new b{color:#9FD39A}
+.lv.lock{cursor:default;opacity:.35}
+.lv i{position:absolute;top:3px;left:3px;font-style:normal;font-size:8.5px;background:#3D77C2;color:#fff;border-radius:5px;padding:0 3px}
+.msg .newdeco{color:#F5CE8A;animation:nextin .5s ease-out 1.8s both}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}.stars .st{opacity:1}}
 </style>
 </head>
@@ -123,7 +173,7 @@ body.lit[data-time="night"]{background:radial-gradient(120% 90% at 50% 6%,#2A396
     <div class="title">LUMENFALL
       <span class="subrow"><button id="prevLv">‹</button><span id="sub">장미창</span><button id="nextLv">›</button></span>
     </div>
-    <div class="hb"><button id="galBtn">창고<span class="badge" id="galN">0</span></button><button id="soundBtn">소리</button><button id="resetBtn">다시</button></div>
+    <div class="hb"><button id="lvBtn">단계</button><button id="galBtn">창고<span class="badge" id="galN">0</span></button><button id="soundBtn">소리</button><button id="resetBtn">다시</button></div>
   </header>
   <div class="goalrow">
     <canvas id="goal" width="260" height="260" style="width:96px;height:96px"></canvas>
@@ -131,6 +181,7 @@ body.lit[data-time="night"]{background:radial-gradient(120% 90% at 50% 6%,#2A396
     <img class="cat" id="cat" alt="" src="">
   </div>
   <div class="boardwrap"><canvas id="board" width="1000" height="1000"></canvas></div>
+  <div class="sill" id="sill"></div>
   <div class="paints" id="paints"></div>
   <div class="tools"><button id="undoBtn">되돌리기</button></div>
   <div class="msg" id="msg"></div>
@@ -145,7 +196,15 @@ body.lit[data-time="night"]{background:radial-gradient(120% 90% at 50% 6%,#2A396
   <div class="gallery" id="gallery"></div>
   <div class="empty" id="galEmpty">아직 완성한 창이 없습니다.<br>창을 완성하면 여기에 걸립니다.</div>
 </div>
+<div class="sheet" id="lvSheet" aria-hidden="true">
+  <div class="sheetbar">
+    <div class="sheettitle">단계<span id="lvCount"></span></div>
+    <button id="closeLv">닫기</button>
+  </div>
+  <div class="lvlist" id="lvList"></div>
+</div>
 <script src="assets.js"></script>
+<script src="deco.js"></script>
 <script src="geo.js"></script>
 <script src="pictures.js"></script>
 <script src="game.js"></script>
