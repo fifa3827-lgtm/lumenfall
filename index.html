@@ -2,6 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Lumenfall</title>
 <style>
@@ -9,7 +10,7 @@
 html{height:100%}*,*::before,*::after{box-sizing:inherit}
 body{margin:0;min-height:100%;color:#EFE6D8;position:relative;overflow-x:hidden;
  background:radial-gradient(120% 90% at 50% 8%,#2C241C 0%,#1A150F 45%,#0E0B08 100%);
- font-family:"Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;
+ font-family:"Jua","Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;
  display:flex;flex-direction:column;align-items:center;
  user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;transition:background 1.4s}
 body.lit{background:radial-gradient(120% 90% at 50% 8%,#241B12 0%,#130E09 45%,#080605 100%)}
@@ -17,15 +18,15 @@ body.lit{background:radial-gradient(120% 90% at 50% 8%,#241B12 0%,#130E09 45%,#0
 header{width:100%;display:flex;justify-content:space-between;align-items:flex-start}
 .title{font-size:13px;font-weight:700;letter-spacing:3.5px;color:#C9B89E}
 .subrow{display:flex;align-items:center;gap:6px;margin-top:4px}
-#sub{font-size:11px;font-weight:600;color:#7E7060;min-width:78px}
+#sub{font-size:12px;font-weight:600;color:#E6D5B8;min-width:78px;text-shadow:0 1px 2px #0007}
 .subrow button,.hb button{border:0;background:none;color:#5E5343;font:inherit;font-weight:700;cursor:pointer}
 .subrow button{font-size:15px;line-height:1;padding:0 2px}
-.hb{display:flex;gap:14px}.hb button{font-size:12px;color:#7E7060}
+.hb{display:flex;gap:14px}.hb button{font-size:13px;color:#E6D5B8;text-shadow:0 1px 2px #0007}
 .goalrow{display:flex;align-items:center;gap:14px;align-self:flex-start;width:100%}
 #goal{flex:0 0 auto;opacity:.95}
-.goallab{font-size:12px;font-weight:600;color:#8A7C68;line-height:1.6}
+.goallab{font-size:14px;font-weight:600;color:#F6E8D0;line-height:1.55;text-shadow:0 1px 3px #0008}
 .boardwrap{width:min(92vw,390px,50vh);transition:filter 1.4s}
-#board{width:100%;display:block;touch-action:manipulation;filter:drop-shadow(0 14px 30px #00000088)}
+#board{width:100%;display:block;touch-action:none;filter:drop-shadow(0 14px 30px #00000088)}
 body.lit .boardwrap{filter:drop-shadow(0 0 46px #F5CE8A4a) drop-shadow(0 0 120px #F5CE8A22)}
 .paints{display:flex;gap:18px;justify-content:center;align-items:flex-end;min-height:74px;transition:opacity 1.4s}
 body.lit .paints{opacity:.2}
@@ -35,14 +36,14 @@ body.lit .paints{opacity:.2}
 .p.on{transform:translateY(-7px) scale(1.06)}
 .p.on::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:1.5px solid #E8D4AE}
 .p:disabled{opacity:.2;cursor:default}
-.rng{font-size:10px;font-weight:700;color:#8A7C68}
+.rng{font-size:11px;font-weight:700;color:#E6D5B8;text-shadow:0 1px 2px #0007}
 .cnt{position:absolute;top:-3px;right:-3px;width:19px;height:19px;border-radius:50%;
  background:#171209;color:#EFDFC0;font-size:10.5px;font-weight:800;line-height:19px;text-align:center;pointer-events:none}
 .tools{display:flex;gap:24px;justify-content:center}
-.tools button{border:0;background:none;color:#7E7060;font:inherit;font-weight:700;font-size:12.5px;cursor:pointer;padding:3px}
+.tools button{border:0;background:none;color:#E6D5B8;text-shadow:0 1px 2px #0007;font:inherit;font-weight:700;font-size:12.5px;cursor:pointer;padding:3px}
 .msg{font-size:14px;font-weight:700;text-align:center;min-height:34px;color:#C9B89E}
 body.lit .msg{color:#F3DFB6}
-.msg small{display:block;font-size:11.5px;font-weight:600;color:#7E7060;margin-top:5px}
+.msg small{display:block;font-size:13px;font-weight:600;color:#E6D5B8;margin-top:5px}
 .next{position:fixed;left:50%;transform:translateX(-50%) translateY(14px);
  bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:30;
  border:1.5px solid #B99A64;background:#1A130Ce8;backdrop-filter:blur(6px);
@@ -67,7 +68,21 @@ body.lit .msg{color:#F3DFB6}
 .gitem span{font-size:10px;font-weight:700;color:#6B5F4E}
 .empty{color:#6B5F4E;font-size:12.5px;font-weight:600;line-height:1.7;text-align:center;margin:auto}
 .empty.hide{display:none}
-@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+.title,.msg,#sub,.rng,.cnt,.goallab,.hb button,.tools button,.next,.sheettitle,.badge{font-weight:400!important}
+.title{letter-spacing:3px;font-size:15px}
+.msg{font-size:17px}
+body[data-time="dawn"]{background:radial-gradient(120% 90% at 50% 6%,#9A6A7C 0%,#5C3E4C 42%,#2A1C24 100%)}
+body[data-time="noon"]{background:radial-gradient(120% 90% at 50% 6%,#A8844C 0%,#5E4826 42%,#2A2012 100%)}
+body[data-time="dusk"]{background:radial-gradient(120% 90% at 50% 6%,#B0664A 0%,#653421 42%,#2A140C 100%)}
+body[data-time="night"]{background:radial-gradient(120% 90% at 50% 6%,#3B4F80 0%,#1C2748 42%,#0A0F1E 100%)}
+body.lit[data-time="dawn"]{background:radial-gradient(120% 90% at 50% 6%,#6E4A58 0%,#3A2530 45%,#170E13 100%)}
+body.lit[data-time="noon"]{background:radial-gradient(120% 90% at 50% 6%,#7A5E34 0%,#3C2E18 45%,#17110A 100%)}
+body.lit[data-time="dusk"]{background:radial-gradient(120% 90% at 50% 6%,#7E4632 0%,#3E2014 45%,#170B06 100%)}
+body.lit[data-time="night"]{background:radial-gradient(120% 90% at 50% 6%,#2A3960 0%,#121A34 45%,#060913 100%)}
+.timechip{display:inline-block;margin-left:8px;font-size:11px;color:#F3E2C4;opacity:.75;letter-spacing:0}
+@keyframes boardpop{0%{transform:scale(1)}35%{transform:scale(1.045)}65%{transform:scale(.99)}100%{transform:scale(1)}}
+.boardwrap.pop{animation:boardpop .7s cubic-bezier(.3,1.4,.5,1)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>

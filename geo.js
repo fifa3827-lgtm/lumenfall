@@ -30,12 +30,12 @@ function geoRose(){
  RINGS.forEach((cnt,ring)=>{
   for(let k=0;k<cnt;k++){
    const a0=k/cnt*TAU,a1=(k+1)/cnt*TAU;
-   if(ring===0){regs.push(polyRegion(arc(RAD[1],0,TAU).slice(0,-1)));break}
+   if(ring===0){regs.push(Object.assign(polyRegion(arc(RAD[1],0,TAU).slice(0,-1)),{ring,k:0,cnt:1}));break}
    const outer=arc(RAD[ring+1],a0,a1), inner=arc(RAD[ring],a0,a1).reverse();
-   regs.push(polyRegion(outer.concat(inner)));
+   regs.push(Object.assign(polyRegion(outer.concat(inner)),{ring,k,cnt}));
   }
  });
- return {regs,name:'장미창'};
+ return {regs,name:'장미창',rings:RINGS};
 }
 function geoHex(){
  const R=0.175, rings=3, regs=[];
@@ -138,12 +138,12 @@ function geoRose8(){
   p.push([Math.cos(a1-Math.PI/2)*r,Math.sin(a1-Math.PI/2)*r]);return p};
  RINGS.forEach((cnt,ring)=>{
   for(let k=0;k<cnt;k++){
-   if(ring===0){regs.push(polyRegion(arc(RAD[1],0,TAU).slice(0,-1)));break}
+   if(ring===0){regs.push(Object.assign(polyRegion(arc(RAD[1],0,TAU).slice(0,-1)),{ring,k:0,cnt:1}));break}
    const a0=k/cnt*TAU,a1=(k+1)/cnt*TAU;
-   regs.push(polyRegion(arc(RAD[ring+1],a0,a1).concat(arc(RAD[ring],a0,a1).reverse())));
+   regs.push(Object.assign(polyRegion(arc(RAD[ring+1],a0,a1).concat(arc(RAD[ring],a0,a1).reverse())),{ring,k,cnt}));
   }
  });
- return {regs,name:'팔엽창'};
+ return {regs,name:'팔엽창',rings:RINGS};
 }
 function geoLancetPair(){
  const regs=[], cols=6, W=1.30, x0=-W/2, cw=W/cols;
