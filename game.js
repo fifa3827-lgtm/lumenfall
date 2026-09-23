@@ -752,9 +752,9 @@ function check(){
  motes=[...Array(30)].map(()=>{const a=Math.random()*Math.PI*2,d=Math.random()*RR*.9;
   return {x:CX+Math.cos(a)*d,y:CY+Math.sin(a)*d,r:1.8+Math.random()*4,a:.25+Math.random()*.5,p:Math.random()*6,vy:-(.1+Math.random()*.28)}});
  const moves=hist.length,st=1+(undone?0:1)+(moves<=CUR.par?1:0);
- const before=starTotal();
+ const before=starTotal(),vBefore=setHave();
  document.body.classList.add('lit');sWin();saveWon(li,st);updGal();fxWin();cat(st===3?'sunny':'happy',true);
- showStars(st,moves);gotDeco(before);
+ showStars(st,moves);gotDeco(before);gotHouse(vBefore);
  litT=performance.now();
  (function b(){lit=Math.min(1,(performance.now()-litT)/1700);
   motes.forEach(m=>{m.y+=m.vy;if(m.y<CY-RR)m.y=CY+RR});render();
@@ -823,6 +823,7 @@ function drawThumb(cv,g,lit1){
 }
 function buildGallery(){
  const wrap=$('gallery');wrap.innerHTML='';
+ wrap.appendChild(villageSection());
  wrap.appendChild(decoSection());
  const N=PICS.length,byName={};PICS.forEach((p,i)=>byName[p.name]=i);
  let have=0;
@@ -848,6 +849,23 @@ function buildGallery(){
  /* 지금 판의 창 모양과 특수 유리로 되돌린다 */
  if(CUR){useGeo(CUR.geo);if(CUR.pic){LOCK=CUR.lock.slice();TWIN=CUR.twin.slice();DRY=CUR.dry.slice();CLEAR=CUR.clear.slice()}}
  $('galEmpty').classList.add('hide');
+}
+/* ---------- 마을 지도 ---------- */
+/* 묶음마다 건물 하나. 모은 그림만큼 창에 불이 들어오고, 묶음을 다 모으면 건물이 환해진다. */
+function setHave(){const N=PICS.length,byName={},out={};PICS.forEach((p,i)=>byName[p.name]=i);
+ const got=new Set(SAVED.map(k=>k%N));
+ SETS.forEach(([t,names])=>{out[t]=[names.filter(n=>got.has(byName[n])).length,names.length]});return out}
+function villageSection(){
+ const have=setHave(),full=VILLAGE.filter(b=>have[b.set]&&have[b.set][0]>=have[b.set][1]).length;
+ const sec=document.createElement('section');sec.className='gset';
+ sec.innerHTML=`<h3>마을<span>불 켜진 집 ${full} / ${VILLAGE.length}</span></h3>`+villageSVG(have)+
+  `<div class="vlist">${VILLAGE.map(b=>{const [g,n]=have[b.set];return `<div class="${g>=n?'full':''}">${b.name} ${g}/${n}<small>${b.set}</small><i><b style="width:${Math.round(100*g/n)}%"></b></i></div>`}).join('')}</div>`;
+ return sec}
+function gotHouse(before){
+ const now=setHave(),fresh=VILLAGE.filter(b=>{const a=before[b.set],c=now[b.set];return c[0]>=c[1]&&a[0]<a[1]});
+ if(!fresh.length)return;
+ setTimeout(()=>{tone(660,.4,'triangle',.06);tone(990,.5,'sine',.05,0,.18);buzz([0,20,60,20])},2200);
+ $('msg').insertAdjacentHTML('beforeend',`<small class="newdeco">「${fresh[0].set}」 그림을 다 모았어요!<br>마을 ${fresh.map(b=>b.name).join(' · ')}에 불이 켜졌어요 · 창고에서 보세요</small>`);
 }
 /* ---------- 창턱 장식 ---------- */
 /* 별(단계마다 최고 기록)을 모으면 장식이 하나씩 생긴다. 창 아래 창턱에 넷까지 올려 둔다. */

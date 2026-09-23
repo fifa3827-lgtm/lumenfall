@@ -134,5 +134,64 @@ const DECO=[
 <path d="M29 34V54M35 34V54" stroke="${DECO_LINE}" stroke-width="1.6"/><rect x="29" y="34" width="6" height="20" fill="#C99A3C"/>
 <path d="M29 34V54M35 34V54" stroke="${DECO_LINE}" stroke-width="1.4"/>
 <path d="M18 61C18 56 24 53 32 53C40 53 46 56 46 61Z" fill="#C99A3C" stroke="${DECO_LINE}" stroke-width="1.6"/>
-<path d="M22 58C25 56 29 55.5 32 55.5" stroke="#F3D383" stroke-width="1.2" fill="none"/>`}
+<path d="M22 58C25 56 29 55.5 32 55.5" stroke="#F3D383" stroke-width="1.2" fill="none"/>`},{id:'globe2',name:'스노볼',need:140,svg:`
+<defs><radialGradient id="dsg-g" cx=".4" cy=".35" r=".8"><stop offset="0" stop-color="#E9F6FF" stop-opacity=".55"/><stop offset="1" stop-color="#7FB2DA" stop-opacity=".55"/></radialGradient></defs>
+<circle cx="32" cy="30" r="21" fill="#1F3550"/>
+<path d="M14 40C20 36 44 36 50 40C48 46 40 50 32 50C24 50 16 46 14 40Z" fill="#F4F8FC"/>
+<path d="M32 22L39 34H25Z M32 16L37 25H27Z" fill="#4F9A5B" stroke="${DECO_LINE}" stroke-width="1"/><rect x="30.5" y="34" width="3" height="4" fill="#7A4B2C"/>
+<circle class="dsnow" cx="22" cy="20" r="1.2" fill="#fff"/><circle class="dsnow" style="animation-delay:.8s" cx="42" cy="18" r="1.1" fill="#fff"/><circle class="dsnow" style="animation-delay:1.6s" cx="28" cy="14" r="1" fill="#fff"/><circle class="dsnow" style="animation-delay:2.2s" cx="45" cy="28" r="1" fill="#fff"/>
+<circle cx="32" cy="30" r="21" fill="url(#dsg-g)" stroke="${DECO_LINE}" stroke-width="1.6"/>
+<path d="M18 22C21 16 26 13 31 12" stroke="#FFFFFF" stroke-width="2" fill="none" stroke-linecap="round" opacity=".8"/>
+<path d="M16 48H48L52 61H12Z" fill="#A8743F" stroke="${DECO_LINE}" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M18 54H46" stroke="#F3C36A" stroke-width="1.6"/>`},
+
+{id:'jack',name:'호박 등불',need:160,svg:`
+<defs><radialGradient id="djk-h"><stop offset="0" stop-color="#FFB24A" stop-opacity=".5"/><stop offset="1" stop-color="#FFB24A" stop-opacity="0"/></radialGradient></defs>
+<circle class="dglow" cx="32" cy="42" r="26" fill="url(#djk-h)"/>
+<path d="M32 22C30 17 31 13 35 11" stroke="#4E7A34" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+<ellipse cx="22" cy="42" rx="12" ry="18" fill="#E27A28" stroke="${DECO_LINE}" stroke-width="1.6"/>
+<ellipse cx="42" cy="42" rx="12" ry="18" fill="#E27A28" stroke="${DECO_LINE}" stroke-width="1.6"/>
+<ellipse cx="32" cy="42" rx="11" ry="19" fill="#F08C35" stroke="${DECO_LINE}" stroke-width="1.6"/>
+<path class="dflame" d="M21 36L26 31L28 38Z M43 36L38 31L36 38Z" fill="#FFE27A" stroke="#B85A18" stroke-width=".8"/>
+<path class="dflame" d="M20 46Q32 56 44 46L40 48L37 45L34 49L30 49L27 45L24 48Z" fill="#FFE27A" stroke="#B85A18" stroke-width=".8"/>
+<path d="M16 34C17 30 19 28 21 27" stroke="#FFB070" stroke-width="1.6" fill="none" stroke-linecap="round"/>`},
+
+{id:'mill',name:'풍차',need:180,svg:`
+<path d="M24 62L27 26H37L40 62Z" fill="#E8DCC6" stroke="${DECO_LINE}" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M24 28L32 17L40 28Z" fill="#B5493F" stroke="${DECO_LINE}" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M29 62V52Q32 48 35 52V62Z" fill="#7A4B2C" stroke="${DECO_LINE}" stroke-width="1.2"/>
+<rect x="30" y="36" width="4" height="6" rx="1" fill="#FFD98A" stroke="${DECO_LINE}" stroke-width="1"/>
+<g class="dspin"><g transform="rotate(0 32 26)"><path d="M30.5 24L26 4H37L33.5 24Z" fill="#F6EFE2" stroke="${DECO_LINE}" stroke-width="1.3" stroke-linejoin="round"/><path d="M28 8H35M28.8 13H34.4M29.6 18H33.6" stroke="#C9B89E" stroke-width="1"/></g><g transform="rotate(90 32 26)"><path d="M30.5 24L26 4H37L33.5 24Z" fill="#F6EFE2" stroke="${DECO_LINE}" stroke-width="1.3" stroke-linejoin="round"/><path d="M28 8H35M28.8 13H34.4M29.6 18H33.6" stroke="#C9B89E" stroke-width="1"/></g><g transform="rotate(180 32 26)"><path d="M30.5 24L26 4H37L33.5 24Z" fill="#F6EFE2" stroke="${DECO_LINE}" stroke-width="1.3" stroke-linejoin="round"/><path d="M28 8H35M28.8 13H34.4M29.6 18H33.6" stroke="#C9B89E" stroke-width="1"/></g><g transform="rotate(270 32 26)"><path d="M30.5 24L26 4H37L33.5 24Z" fill="#F6EFE2" stroke="${DECO_LINE}" stroke-width="1.3" stroke-linejoin="round"/><path d="M28 8H35M28.8 13H34.4M29.6 18H33.6" stroke="#C9B89E" stroke-width="1"/></g></g>
+<circle cx="32" cy="26" r="2.6" fill="#6A4A2C" stroke="${DECO_LINE}" stroke-width="1"/>`},
+
+{id:'boat',name:'종이배',need:200,svg:`
+<ellipse cx="32" cy="56" rx="26" ry="6" fill="#4E9CC9" stroke="${DECO_LINE}" stroke-width="1.6"/>
+<path class="dwave" d="M12 55Q17 52 22 55T32 55T42 55T52 55" stroke="#BFE3F5" stroke-width="1.4" fill="none"/>
+<g class="dbob"><path d="M8 38H56L48 52H16Z" fill="#F6F1E6" stroke="${DECO_LINE}" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M20 38L32 14L44 38Z" fill="#FFFDF8" stroke="${DECO_LINE}" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M32 14V38M16 52L32 38L48 52" stroke="#D9CDB6" stroke-width="1.2" fill="none"/>
+<path d="M24 36L32 20" stroke="#FFFFFF" stroke-width="1.4" opacity=".9"/></g>`},
+
+{id:'vase',name:'꽃병',need:220,svg:`
+<path d="M32 36C31 26 30 20 24 12M32 36C32 26 33 18 33 9M32 36C34 27 38 21 44 15" stroke="#4E8A3C" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+<path d="M20 14C19 8 23 5 24 9C25 5 29 8 28 14C27 17 21 17 20 14Z" fill="#E24B4A" stroke="${DECO_LINE}" stroke-width="1.2"/>
+<path d="M29 10C28 4 32 1 33 5C34 1 38 4 37 10C36 13 30 13 29 10Z" fill="#EFBE2E" stroke="${DECO_LINE}" stroke-width="1.2"/>
+<path d="M40 17C39 11 43 8 44 12C45 8 49 11 48 17C47 20 41 20 40 17Z" fill="#C97BE0" stroke="${DECO_LINE}" stroke-width="1.2"/>
+<path d="M36 29C38 26 42 25 44 27C42 30 39 31 36 29Z" fill="#79BF5E" stroke="${DECO_LINE}" stroke-width="1"/>
+<path d="M25 34H39V38C46 42 48 48 46 54C44 60 38 62 32 62C26 62 20 60 18 54C16 48 18 42 25 38Z" fill="#3F78B5" stroke="${DECO_LINE}" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M20 48H44" stroke="#F3E7D2" stroke-width="2.4"/><path d="M22 44C21 48 22 53 25 57" stroke="#9CC4EC" stroke-width="1.6" fill="none" stroke-linecap="round"/>`},
+
+{id:'train',name:'기차 모형',need:245,svg:`
+<circle class="dpuff" cx="17" cy="14" r="4" fill="#EDE6DA" opacity=".8"/><circle class="dpuff" style="animation-delay:.9s" cx="13" cy="8" r="3" fill="#EDE6DA" opacity=".7"/>
+<rect x="14" y="20" width="8" height="12" fill="#3B2E28" stroke="${DECO_LINE}" stroke-width="1.4"/>
+<path d="M8 32H40V52H8Z" fill="#D24A42" stroke="${DECO_LINE}" stroke-width="1.6"/>
+<path d="M36 22H56V52H36Z" fill="#3F78B5" stroke="${DECO_LINE}" stroke-width="1.6"/>
+<path d="M34 22H58V18H34Z" fill="#2B2018" stroke="${DECO_LINE}" stroke-width="1.4"/>
+<rect x="41" y="27" width="10" height="9" rx="1" fill="#FFE3A0" stroke="${DECO_LINE}" stroke-width="1.2"/>
+<path d="M8 40H40" stroke="#F3C36A" stroke-width="2"/>
+<path d="M4 50L8 44V52Z" fill="#2B2018"/>
+<circle cx="16" cy="54" r="6" fill="#2B2018" stroke="${DECO_LINE}" stroke-width="1.4"/><circle cx="16" cy="54" r="2" fill="#C9A560"/>
+<circle cx="31" cy="54" r="6" fill="#2B2018" stroke="${DECO_LINE}" stroke-width="1.4"/><circle cx="31" cy="54" r="2" fill="#C9A560"/>
+<circle cx="47" cy="55" r="5" fill="#2B2018" stroke="${DECO_LINE}" stroke-width="1.4"/><circle cx="47" cy="55" r="1.8" fill="#C9A560"/>
+<path d="M2 61H62" stroke="#8A6440" stroke-width="2"/>`}
 ];
